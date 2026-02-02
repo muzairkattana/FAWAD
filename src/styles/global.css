@@ -34,7 +34,7 @@ body {
   position: relative;
 }
 
-/* Hide scrollbar but keep functionality */
+ Hide scrollbar but keep functionality 
 body::-webkit-scrollbar {
   display: none;
 }
@@ -104,7 +104,7 @@ button:hover::after {
   left: 100%;
 }
 
-/* Sparkle Effect for inputs */
+ Sparkle Effect for inputs 
 .login-input:focus {
   border-color: var(--primary) !important;
   box-shadow: 0 0 15px rgba(255, 107, 129, 0.3);
@@ -151,7 +151,7 @@ button:hover::after {
   animation: float linear infinite;
 }
 
-/* More varied heart animations */
+ More varied heart animations 
 .heart:nth-child(1) {
   left: 5%;
   animation-duration: 15s;
@@ -220,7 +220,7 @@ button:hover::after {
   transform: scale(1.2);
 }
 
-/* Custom scrollbar for chat */
+ Custom scrollbar for chat 
 .antique-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
@@ -253,8 +253,8 @@ button:hover::after {
   animation-delay: 2s;
 }
 
-/* Mobile Adjustments */
-/*
+ Mobile Adjustments 
+
 @media (max-width: 768px) {
   :root {
     --shadow-card: 0 5px 15px rgba(0, 0, 0, 0.1);
@@ -285,7 +285,7 @@ button:hover::after {
     font-size: 1.5rem;
   }
 }
-*/
+
 
 @media (max-width: 480px) {
   h1 {

@@ -9,8 +9,8 @@ export default function ValentineGame({ onWin }) {
 
     const spawnHeart = useCallback(() => {
         const id = Date.now() + Math.random()
-        const x = Math.random() * (window.innerWidth - 50)
-        const size = 30 + Math.random() * 30
+        const x = Math.random() * (window.innerWidth - (window.innerWidth < 768 ? 80 : 50))
+        const size = (window.innerWidth < 768 ? 20 : 30) + Math.random() * (window.innerWidth < 768 ? 20 : 30)
         const duration = 2 + Math.random() * 2
 
         setHearts(prev => [...prev, { id, x, size, duration }])
@@ -57,8 +57,8 @@ export default function ValentineGame({ onWin }) {
         }}>
             {!gameStarted ? (
                 <div style={{ textAlign: 'center', zIndex: 10 }}>
-                    <h2 style={{ color: '#ff4757', fontFamily: 'var(--font-fun)' }}>Heart Catcher 🏹</h2>
-                    <p style={{ color: '#5d4037', marginBottom: '20px' }}>Catch 15 hearts to reveal the secret!</p>
+                    <h2 style={{ color: '#ff4757', fontFamily: 'var(--font-fun)', fontSize: window.innerWidth < 768 ? '1.5rem' : '2rem' }}>Heart Catcher 🏹</h2>
+                    <p style={{ color: '#5d4037', marginBottom: '20px', fontSize: window.innerWidth < 768 ? '0.9rem' : '1rem' }}>Catch 15 hearts to reveal the secret!</p>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
@@ -69,7 +69,7 @@ export default function ValentineGame({ onWin }) {
                             color: 'white',
                             border: 'none',
                             borderRadius: '50px',
-                            fontSize: '1.2rem',
+                            fontSize: window.innerWidth < 768 ? '1rem' : '1.2rem',
                             cursor: 'pointer'
                         }}
                     >
@@ -82,7 +82,7 @@ export default function ValentineGame({ onWin }) {
                         position: 'absolute',
                         top: '20px',
                         left: '20px',
-                        fontSize: '1.5rem',
+                        fontSize: window.innerWidth < 768 ? '1.2rem' : '1.5rem',
                         fontWeight: 'bold',
                         color: '#ff4757',
                         zIndex: 10

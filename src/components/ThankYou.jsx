@@ -40,7 +40,7 @@ export default function ThankYou({ onLogout }) {
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
-                padding: '100px 20px',
+                padding: window.innerWidth < 768 ? '40px 20px' : '100px 20px',
                 background: 'linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url("https://www.transparenttextures.com/patterns/aged-paper.png")',
                 backgroundColor: '#1b110e',
                 overflowY: 'auto'
@@ -56,10 +56,10 @@ export default function ThankYou({ onLogout }) {
                     style={{
                         cursor: 'pointer',
                         background: '#f4e7d1',
-                        padding: '40px',
+                        padding: window.innerWidth < 768 ? '30px 20px' : '40px',
                         borderRadius: '10px',
                         boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-                        maxWidth: '400px',
+                        maxWidth: window.innerWidth < 768 ? '300px' : '400px',
                         textAlign: 'center',
                         position: 'relative',
                         border: '2px solid #d4c5a9'
@@ -79,7 +79,7 @@ export default function ThankYou({ onLogout }) {
                     <h2 style={{
                         fontFamily: 'var(--font-antique)',
                         color: '#5d4037',
-                        fontSize: '2rem',
+                        fontSize: window.innerWidth < 768 ? '1.5rem' : '2rem',
                         marginBottom: '10px'
                     }}>
                         A Secret Checkpoint 🔒
@@ -89,7 +89,7 @@ export default function ThankYou({ onLogout }) {
                     </p>
                     <div style={{
                         marginTop: '20px',
-                        fontSize: '3rem',
+                        fontSize: window.innerWidth < 768 ? '2rem' : '3rem',
                         filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.2))'
                     }}>
                         💌
@@ -105,7 +105,7 @@ export default function ThankYou({ onLogout }) {
                             background: '#fcf6e8',
                             backgroundImage: 'url("https://www.transparenttextures.com/patterns/cream-paper.png")',
                             width: '100%',
-                            padding: '3rem',
+                            padding: window.innerWidth < 768 ? '1.5rem' : '3rem',
                             borderRadius: '5px',
                             boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
                             position: 'relative',
@@ -136,7 +136,7 @@ export default function ThankYou({ onLogout }) {
 
                         <h1 style={{
                             fontFamily: 'var(--font-antique)',
-                            fontSize: '2.5rem',
+                            fontSize: window.innerWidth < 768 ? '1.8rem' : '2.5rem',
                             marginBottom: '30px',
                             textAlign: 'center',
                             color: '#3e2723',
@@ -148,7 +148,7 @@ export default function ThankYou({ onLogout }) {
 
                         <div style={{
                             fontFamily: 'var(--font-typewriter)',
-                            fontSize: '1.1rem',
+                            fontSize: window.innerWidth < 768 ? '1rem' : '1.1rem',
                             lineHeight: '1.8',
                             textAlign: 'justify'
                         }}>
@@ -214,7 +214,7 @@ export default function ThankYou({ onLogout }) {
                             marginTop: '40px',
                             textAlign: 'right',
                             fontFamily: 'var(--font-hand)',
-                            fontSize: '2rem',
+                            fontSize: window.innerWidth < 768 ? '1.5rem' : '2rem',
                             color: '#d32f2f'
                         }}>
                             With all my heart,<br />
@@ -266,7 +266,7 @@ export default function ThankYou({ onLogout }) {
                         {showGame && (
                             <motion.div
                                 initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: '400px' }}
+                                animate={{ opacity: 1, height: window.innerWidth < 768 ? '300px' : '400px' }}
                                 style={{ width: '100%', marginBottom: '20px' }}
                             >
                                 <ValentineGame onWin={() => { setShowGame(false); setShowChat(true); }} />
