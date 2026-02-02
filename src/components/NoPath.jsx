@@ -24,7 +24,7 @@ export default function NoPath({ onRetry }) {
             </p>
 
             <p style={{ fontSize: '1rem', fontStyle: 'italic', opacity: 0.8 }}>
-                (System auto-logging out...)
+                (System auto-logging out... and cancelling your best friend subscription... 😈)
             </p>
 
             {/* Optional retry button if they regret it immediately, hidden or small */}

@@ -37,6 +37,18 @@ export default function Decision({ onYes, onNo }) {
                 Hypervisor has a very important question for you 🥹💌
             </h1>
 
+            <div className="hearts-bg">
+                <div className="heart">❤️</div>
+                <div className="heart">💖</div>
+                <div className="heart">💝</div>
+                <div className="heart">💕</div>
+                <div className="heart">💗</div>
+                <div className="heart">💓</div>
+                <div className="heart">💞</div>
+                <div className="heart">💟</div>
+                <div className="heart">❣️</div>
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '40px' }}>
                 <motion.button
                     whileHover={{ scale: 1.1 }}

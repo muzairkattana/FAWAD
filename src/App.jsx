@@ -4,6 +4,7 @@ import Decision from './components/Decision'
 import Valentine from './components/Valentine'
 import ThankYou from './components/ThankYou'
 import NoPath from './components/NoPath'
+import MusicPlayer from './components/MusicPlayer'
 import './styles/global.css'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
 
     return (
         <div className="app-container">
+            <MusicPlayer />
             {renderPage()}
         </div>
     )
