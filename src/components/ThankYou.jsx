@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import AntiqueChat from './AntiqueChat'
-import Memories from './Memories'
 import ValentineGame from './ValentineGame'
 
 export default function ThankYou({ onLogout }) {
@@ -27,6 +26,13 @@ export default function ThankYou({ onLogout }) {
         "You make every moment feel high-definition ✨",
         "More precious than a bug-free production push 🚀",
         "You have the kindest soul I've ever met 💖"
+    ]
+
+    const specialMoments = [
+        "Every moment with you is like deploying to production - exciting and rewarding! 🚀",
+        "You're the missing semicolon in my life's code - completing everything perfectly! 💻",
+        "Like a perfect algorithm, you make my heart run in O(1) time! ⚡",
+        "You're my favorite API - always reliable and full of amazing responses! 💝"
     ]
 
     return (
@@ -207,7 +213,48 @@ export default function ThankYou({ onLogout }) {
                             <p style={{ textAlign: 'center', marginTop: showReasons ? '40px' : '30px', fontStyle: 'italic', fontWeight: 'bold' }}>
                                 You are truly one of a kind. 💖
                             </p>
-                            {showReasons && <Memories />}
+                            
+                            {showReasons && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 1.5 }}
+                                    style={{
+                                        marginTop: '30px',
+                                        padding: '20px',
+                                        background: 'linear-gradient(135deg, rgba(255,107,129,0.1), rgba(162,155,254,0.1))',
+                                        borderRadius: '15px',
+                                        border: '1px solid rgba(255,107,129,0.3)'
+                                    }}
+                                >
+                                    <h3 style={{
+                                        fontFamily: 'var(--font-antique)',
+                                        color: '#5d4037',
+                                        textAlign: 'center',
+                                        marginBottom: '15px',
+                                        fontSize: window.innerWidth < 768 ? '1.2rem' : '1.4rem'
+                                    }}>
+                                        Special Moments 💝
+                                    </h3>
+                                    {specialMoments.map((moment, i) => (
+                                        <motion.p
+                                            key={i}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 1.6 + i * 0.2 }}
+                                            style={{
+                                                marginBottom: '10px',
+                                                fontStyle: 'italic',
+                                                color: '#795548',
+                                                fontSize: window.innerWidth < 768 ? '0.9rem' : '1rem',
+                                                textAlign: 'center'
+                                            }}
+                                        >
+                                            {moment}
+                                        </motion.p>
+                                    ))}
+                                </motion.div>
+                            )}
                         </div>
 
                         <div style={{
@@ -292,21 +339,23 @@ export default function ThankYou({ onLogout }) {
                             whileTap={{ scale: 0.95 }}
                             onClick={onLogout}
                             style={{
-                                background: '#8d6e63',
+                                background: 'linear-gradient(135deg, #8d6e63, #6d4c41)',
                                 color: '#fff',
                                 border: 'none',
-                                padding: '12px 30px',
+                                padding: window.innerWidth < 768 ? '15px 25px' : '15px 40px',
                                 fontFamily: 'var(--font-antique)',
-                                fontSize: '1.2rem',
+                                fontSize: window.innerWidth < 768 ? '1rem' : '1.2rem',
                                 borderRadius: '50px',
                                 cursor: 'pointer',
-                                boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                                boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '10px'
+                                gap: '10px',
+                                transition: 'all 0.3s ease'
                             }}
                         >
-                            Seal & Logout 🕯️
+                            <span style={{ fontSize: '1.5rem' }}>🕯️</span>
+                            Seal & Logout
                         </motion.button>
                     </div>
                 </div>
