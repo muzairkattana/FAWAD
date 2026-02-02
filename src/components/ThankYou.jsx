@@ -96,7 +96,7 @@ export default function ThankYou({ onLogout }) {
                     </div>
                 </motion.div>
             ) : (
-                <div style={{ width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '40px', alignItems: 'center' }}>
+                <div style={{ width: '100%', maxWidth: '900px', display: 'flex', flexDirection: 'column', gap: '40px', alignItems: 'center' }}>
                     <motion.div
                         initial={{ opacity: 0, rotateX: 90 }}
                         animate={{ opacity: 1, rotateX: 0 }}

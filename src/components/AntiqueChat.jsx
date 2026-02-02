@@ -9,6 +9,7 @@ export default function AntiqueChat() {
     const [chatName, setChatName] = useState('')
     const [showRegistry, setShowRegistry] = useState(true)
     const [isOnline, setIsOnline] = useState(navigator.onLine)
+    const [hiddenMessages, setHiddenMessages] = useState([])
     const chatEndRef = useRef(null)
 
     // Detect connectivity
@@ -33,6 +34,11 @@ export default function AntiqueChat() {
         const savedCache = localStorage.getItem('antique_chat_cache')
         if (savedCache) {
             setMessages(JSON.parse(savedCache))
+        }
+
+        const savedHidden = localStorage.getItem('antique_chat_hidden')
+        if (savedHidden) {
+            setHiddenMessages(JSON.parse(savedHidden))
         }
         fetchMessages()
 
@@ -105,13 +111,51 @@ export default function AntiqueChat() {
         }
     }
 
-    const handleClearForMe = () => {
-        setMessages([])
-        localStorage.removeItem('antique_chat_cache')
-        localStorage.removeItem('antique_chat_queue')
-        localStorage.removeItem('antique_chat_name') // Allow re-signing for fresh start
-        setChatName('')
-        setShowRegistry(true)
+    const handleClearForMe = async () => {
+        const option = confirm("Clear all messages? \n\n'OK' for Me Only \n'Cancel' to Clear for EVERYONE (Your messages)")
+
+        if (option) {
+            // Clear for Me
+            setMessages([])
+            localStorage.removeItem('antique_chat_cache')
+            localStorage.removeItem('antique_chat_queue')
+            setHiddenMessages([])
+            localStorage.removeItem('antique_chat_hidden')
+        } else {
+            // Clear for Everyone (Your own messages)
+            if (confirm("Are you sure you want to delete all YOUR messages for everyone?")) {
+                const ownMessages = messages.filter(m => m.sender === chatName)
+                for (const msg of ownMessages) {
+                    await handleDeleteForAll(msg.id)
+                }
+                alert("Your messages have been cleared for everyone. 🖋️✨")
+            }
+        }
+    }
+
+    const handleDeleteForMe = (id) => {
+        const updatedHidden = [...hiddenMessages, id]
+        setHiddenMessages(updatedHidden)
+        localStorage.setItem('antique_chat_hidden', JSON.stringify(updatedHidden))
+    }
+
+    const handleDeleteSpecificText = async (text) => {
+        if (!text.trim()) return
+        const messagesToDelete = messages.filter(m => m.content.toLowerCase().includes(text.toLowerCase()))
+        if (messagesToDelete.length === 0) {
+            alert(`No messages found containing "${text}"`)
+            return
+        }
+
+        if (confirm(`Delete ${messagesToDelete.length} messages containing "${text}" for everyone?`)) {
+            for (const msg of messagesToDelete) {
+                if (msg.sender === chatName) {
+                    await handleDeleteForAll(msg.id)
+                } else {
+                    handleDeleteForMe(msg.id)
+                }
+            }
+        }
     }
 
     const handleSealForTravel = () => {
@@ -150,8 +194,8 @@ export default function AntiqueChat() {
             className="burnt-edges"
             style={{
                 width: '100%',
-                maxWidth: '600px',
-                height: '75vh',
+                maxWidth: '800px',
+                height: '80vh',
                 background: '#f4e7d1',
                 backgroundImage: 'url("https://www.transparenttextures.com/patterns/creme-paper.png")',
                 borderRadius: '5px',
@@ -283,6 +327,21 @@ export default function AntiqueChat() {
                         📦
                     </button>
                     <button
+                        onClick={() => {
+                            const text = prompt("Enter specific text to delete from your view (or your messages for everyone):")
+                            if (text) handleDeleteSpecificText(text)
+                        }}
+                        title="Delete messages with specific text"
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            fontSize: '1.2rem',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        🔍🗑️
+                    </button>
+                    <button
                         onClick={handleClearForMe}
                         style={{
                             background: 'transparent',
@@ -293,7 +352,7 @@ export default function AntiqueChat() {
                             fontStyle: 'italic'
                         }}
                     >
-                        Re-Sign
+                        Clear All
                     </button>
                 </div>
             </div>
@@ -321,7 +380,7 @@ export default function AntiqueChat() {
                 )}
 
                 <AnimatePresence>
-                    {messages.map((msg) => (
+                    {messages.filter(msg => !hiddenMessages.includes(msg.id)).map((msg) => (
                         <motion.div
                             key={msg.id}
                             initial={{ opacity: 0, y: 10 }}
@@ -361,24 +420,63 @@ export default function AntiqueChat() {
                                 </span>
 
                                 {msg.sender === chatName && (
-                                    <button
-                                        onClick={() => handleDeleteForAll(msg.id)}
-                                        style={{
-                                            position: 'absolute',
-                                            top: '0',
-                                            right: '-25px',
-                                            background: 'transparent',
-                                            border: 'none',
-                                            fontSize: '16px',
-                                            color: '#d32f2f',
-                                            cursor: 'pointer',
-                                            opacity: 0,
-                                            transition: 'opacity 0.3s'
-                                        }}
-                                        className="delete-btn"
-                                    >
-                                        🗑️
-                                    </button>
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '0',
+                                        right: msg.sender === chatName ? '-55px' : 'auto',
+                                        left: msg.sender === chatName ? 'auto' : '-55px',
+                                        display: 'flex',
+                                        gap: '5px'
+                                    }} className="msg-actions">
+                                        <button
+                                            onClick={() => handleDeleteForAll(msg.id)}
+                                            title="Delete for everyone"
+                                            style={{
+                                                background: 'transparent',
+                                                border: 'none',
+                                                fontSize: '14px',
+                                                color: '#d32f2f',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            🗑️🌎
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteForMe(msg.id)}
+                                            title="Delete for me"
+                                            style={{
+                                                background: 'transparent',
+                                                border: 'none',
+                                                fontSize: '14px',
+                                                color: '#795548',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            ❌
+                                        </button>
+                                    </div>
+                                )}
+                                {msg.sender !== chatName && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '0',
+                                        left: '-30px',
+                                        display: 'flex'
+                                    }} className="msg-actions">
+                                        <button
+                                            onClick={() => handleDeleteForMe(msg.id)}
+                                            title="Delete for me"
+                                            style={{
+                                                background: 'transparent',
+                                                border: 'none',
+                                                fontSize: '14px',
+                                                color: '#795548',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            ❌
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </motion.div>
