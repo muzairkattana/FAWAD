@@ -201,7 +201,7 @@ export default function ThankYou({ onLogout }) {
                                 </motion.div>
                             )}
 
-                            <p style={{ textAlign: 'center', marginTop: '40px', fontStyle: 'italic', fontWeight: 'bold' }}>
+                            <p style={{ textAlign: 'center', marginTop: showReasons ? '40px' : '30px', fontStyle: 'italic', fontWeight: 'bold' }}>
                                 You are truly one of a kind. 💖
                             </p>
                         </div>
