@@ -61,11 +61,47 @@ body {
   padding: 20px;
 }
 
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px rgba(255, 107, 129, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(255, 107, 129, 0.6);
+  }
+
+  100% {
+    box-shadow: 0 0 5px rgba(255, 107, 129, 0.2);
+  }
+}
+
+.glow-effect {
+  animation: glow 3s infinite ease-in-out;
+}
+
 button {
   cursor: pointer;
   border: none;
   font-family: var(--font-main);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+}
+
+button::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: rotate(45deg);
+  transition: 0.5s;
+}
+
+button:hover::after {
+  left: 100%;
 }
 
 /* Sparkle Effect for inputs */
@@ -73,6 +109,7 @@ button {
   border-color: var(--primary) !important;
   box-shadow: 0 0 15px rgba(255, 107, 129, 0.3);
   transform: translateY(-2px);
+  background: white !important;
 }
 
 @keyframes float {
@@ -158,6 +195,43 @@ button {
   left: 65%;
   animation-duration: 19s;
   animation-delay: 6s;
+}
+
+@keyframes ink-spread {
+  from {
+    filter: blur(2px);
+    opacity: 0;
+  }
+
+  to {
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
+.ink-text {
+  animation: ink-spread 0.5s ease-out;
+}
+
+.delete-btn:hover {
+  background: #ff6b81 !important;
+  color: white !important;
+  opacity: 1 !important;
+  transform: scale(1.2);
+}
+
+/* Custom scrollbar for chat */
+.antique-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.antique-scrollbar::-webkit-scrollbar-track {
+  background: rgba(139, 69, 19, 0.05);
+}
+
+.antique-scrollbar::-webkit-scrollbar-thumb {
+  background: #8b4513;
+  border-radius: 10px;
 }
 
 .heart:nth-child(8) {

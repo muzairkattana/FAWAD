@@ -1,9 +1,15 @@
-import { useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 
 export default function Valentine({ onComplete }) {
+    const [showSkip, setShowSkip] = useState(false)
+
     useEffect(() => {
+        const skipTimer = setTimeout(() => {
+            setShowSkip(true)
+        }, 8000) // Show after 8 seconds
+
         // Fire confetti
         const duration = 5 * 1000;
         const animationEnd = Date.now() + duration;
@@ -33,6 +39,7 @@ export default function Valentine({ onComplete }) {
         return () => {
             clearInterval(interval)
             clearTimeout(timer)
+            clearTimeout(skipTimer)
         }
     }, [onComplete])
 
@@ -84,7 +91,7 @@ export default function Valentine({ onComplete }) {
                 style={{
                     color: '#fff',
                     fontFamily: 'var(--font-fun)',
-                    fontSize: '3rem',
+                    fontSize: '2.5rem',
                     textShadow: '0 2px 4px rgba(0,0,0,0.2)',
                     zIndex: 10
                 }}
@@ -120,14 +127,39 @@ export default function Valentine({ onComplete }) {
             <motion.p
                 animate={{ y: [0, -10, 0] }}
                 transition={{ repeat: Infinity, duration: 0.5 }}
-                style={{ color: 'white', marginTop: '30px', fontSize: '1.5rem', fontWeight: 'bold', zIndex: 10 }}
+                style={{ color: 'white', marginTop: '30px', fontSize: '1.2rem', fontWeight: 'bold', zIndex: 10 }}
             >
                 WOOOOOO! PARTYYYY! 🎉💃🕺
             </motion.p>
 
-            <p style={{ color: 'white', marginTop: '10px', opacity: 0.8, fontSize: '0.9rem', zIndex: 10 }}>
-                (Redirecting to the emotional part in 1 minute... enjoy the dance! 😂)
-                <br />Click anywhere for more confetti!
+            <AnimatePresence>
+                {showSkip && (
+                    <motion.button
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => { e.stopPropagation(); onComplete(); }}
+                        style={{
+                            marginTop: '20px',
+                            padding: '12px 25px',
+                            background: 'rgba(255,255,255,0.2)',
+                            color: 'white',
+                            border: '1px solid white',
+                            borderRadius: '50px',
+                            zIndex: 20,
+                            cursor: 'pointer',
+                            fontSize: '1rem',
+                            backdropFilter: 'blur(5px)'
+                        }}
+                    >
+                        Read the Letter... 💌
+                    </motion.button>
+                )}
+            </AnimatePresence>
+
+            <p style={{ color: 'white', marginTop: '20px', opacity: 0.6, fontSize: '0.8rem', zIndex: 10 }}>
+                Click anywhere for more confetti!
             </p>
         </motion.div>
     )
