@@ -242,8 +242,9 @@ export default function AntiqueChat() {
                 alignItems: 'center'
             }}>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '1.4rem', color: '#5d2e0a', fontFamily: 'var(--font-antique)' }}>
+                    <span style={{ fontSize: '1.4rem', color: '#5d2e0a', fontFamily: 'var(--font-antique)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         📜 {chatName || 'The Scroll'}
+                        {isOnline && <span style={{ width: '10px', height: '10px', background: '#4caf50', borderRadius: '50%', boxShadow: '0 0 10px #4caf50' }} title="Online"></span>}
                     </span>
                     {!isOnline && (
                         <span style={{ fontSize: '0.7rem', color: '#d32f2f', fontWeight: 'bold' }}>📡 Offline - Saved to Quill</span>

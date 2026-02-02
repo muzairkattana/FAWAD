@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import AntiqueChat from './AntiqueChat'
+import Memories from './Memories'
+import ValentineGame from './ValentineGame'
 
 export default function ThankYou({ onLogout }) {
     const [isOpen, setIsOpen] = useState(false)
@@ -17,6 +19,7 @@ export default function ThankYou({ onLogout }) {
 
     const [showReasons, setShowReasons] = useState(false)
     const [showChat, setShowChat] = useState(false)
+    const [showGame, setShowGame] = useState(false)
 
     const reasons = [
         "Your smile debugs my worst days ☀️",
@@ -204,6 +207,7 @@ export default function ThankYou({ onLogout }) {
                             <p style={{ textAlign: 'center', marginTop: showReasons ? '40px' : '30px', fontStyle: 'italic', fontWeight: 'bold' }}>
                                 You are truly one of a kind. 💖
                             </p>
+                            {showReasons && <Memories />}
                         </div>
 
                         <div style={{
@@ -217,8 +221,8 @@ export default function ThankYou({ onLogout }) {
                             Fawad (Hypervisor)
                         </div>
 
-                        {showReasons && !showChat && (
-                            <div style={{ textAlign: 'center', marginTop: '40px' }}>
+                        {showReasons && !showChat && !showGame && (
+                            <div style={{ textAlign: 'center', marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <motion.button
                                     whileHover={{ scale: 1.1 }}
                                     onClick={() => setShowChat(true)}
@@ -230,14 +234,45 @@ export default function ThankYou({ onLogout }) {
                                         border: 'none',
                                         cursor: 'pointer',
                                         fontFamily: 'var(--font-antique)',
-                                        boxShadow: '0 5px 15px rgba(0,0,0,0.3)'
+                                        boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
+                                        width: 'fit-content'
                                     }}
                                 >
                                     Open the Eternal Scroll 📜
                                 </motion.button>
+
+                                <motion.button
+                                    whileHover={{ scale: 1.1 }}
+                                    onClick={() => setShowGame(true)}
+                                    style={{
+                                        background: '#ff6b81',
+                                        color: 'white',
+                                        padding: '12px 25px',
+                                        borderRadius: '50px',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        fontFamily: 'var(--font-fun)',
+                                        boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
+                                        width: 'fit-content'
+                                    }}
+                                >
+                                    Play Heart Catcher 🏹❤️
+                                </motion.button>
                             </div>
                         )}
                     </motion.div>
+
+                    <AnimatePresence>
+                        {showGame && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: '400px' }}
+                                style={{ width: '100%', marginBottom: '20px' }}
+                            >
+                                <ValentineGame onWin={() => { setShowGame(false); setShowChat(true); }} />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     <AnimatePresence>
                         {showChat && (

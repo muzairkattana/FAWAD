@@ -21,8 +21,8 @@ export default function NoPath({ onRetry }) {
                 overflow: 'hidden'
             }}
         >
-            <div style={{ fontSize: '5rem', marginBottom: '20px' }}>
-                🌧️
+            <div style={{ fontSize: '5rem', marginBottom: '20px', borderRadius: '20px', overflow: 'hidden' }}>
+                <img src="/Cats_Dancing_GIF.gif" alt="Sad Cats Dancing" style={{ width: '100%', maxWidth: '300px' }} />
             </div>
 
             <h1 style={{ fontFamily: 'var(--font-fun)', fontSize: '2.5rem', marginBottom: '20px' }}>
