@@ -252,7 +252,9 @@ button:hover::after {
   animation-duration: 15s;
   animation-delay: 2s;
 }
+
 /* Mobile Adjustments */
+/*
 @media (max-width: 768px) {
   :root {
     --shadow-card: 0 5px 15px rgba(0, 0, 0, 0.1);
@@ -283,6 +285,7 @@ button:hover::after {
     font-size: 1.5rem;
   }
 }
+*/
 
 @media (max-width: 480px) {
   h1 {

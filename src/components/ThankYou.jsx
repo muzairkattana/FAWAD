@@ -105,7 +105,7 @@ export default function ThankYou({ onLogout }) {
                             background: '#fcf6e8',
                             backgroundImage: 'url("https://www.transparenttextures.com/patterns/cream-paper.png")',
                             width: '100%',
-                            padding: window.innerWidth < 768 ? '1.5rem' : '3rem',
+                            padding: '3rem',
                             borderRadius: '5px',
                             boxShadow: '0 10px 40px rgba(0,0,0,0.4)',
                             position: 'relative',
@@ -136,8 +136,8 @@ export default function ThankYou({ onLogout }) {
 
                         <h1 style={{
                             fontFamily: 'var(--font-antique)',
-                            fontSize: window.innerWidth < 768 ? '1.8rem' : '2.5rem',
-                            marginBottom: window.innerWidth < 768 ? '20px' : '30px',
+                            fontSize: '2.5rem',
+                            marginBottom: '30px',
                             textAlign: 'center',
                             color: '#3e2723',
                             borderBottom: '2px solid #d7ccc8',
