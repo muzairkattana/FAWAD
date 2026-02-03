@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { WebRTCManager } from '../lib/webrtcManager'
 
-export default function WebRTCTicTacToe({ onWin }) {
+export default function AdvancedWebRTCTicTacToe({ onWin }) {
     const [gameState, setGameState] = useState('menu') // menu, hosting, joining, playing, ended
     const [playerName, setPlayerName] = useState('')
     const [opponentName, setOpponentName] = useState('')
@@ -10,11 +11,14 @@ export default function WebRTCTicTacToe({ onWin }) {
     const [currentPlayer, setCurrentPlayer] = useState('X')
     const [winner, setWinner] = useState(null)
     const [connectionStatus, setConnectionStatus] = useState('disconnected')
-    const [gameId, setGameId] = useState('')
+    const [gameCode, setGameCode] = useState('')
     const [joinCode, setJoinCode] = useState('')
+    const [peerId, setPeerId] = useState('')
+    const [voiceEnabled, setVoiceEnabled] = useState(false)
+    const [isMuted, setIsMuted] = useState(false)
     
-    const peerConnection = useRef(null)
-    const dataChannel = useRef(null)
+    const webrtcManager = useRef(null)
+    const audioRef = useRef(null)
 
     const winningCombinations = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
@@ -24,28 +28,13 @@ export default function WebRTCTicTacToe({ onWin }) {
 
     useEffect(() => {
         return () => {
-            cleanup()
+            if (webrtcManager.current) {
+                webrtcManager.current.cleanup()
+            }
         }
     }, [])
 
-    const cleanup = () => {
-        if (dataChannel.current) {
-            dataChannel.current.close()
-        }
-        if (peerConnection.current) {
-            peerConnection.current.close()
-        }
-        
-        // Clean up localStorage data
-        if (gameId) {
-            localStorage.removeItem(`webrtc_game_${gameId}`)
-            localStorage.removeItem(`answer_${gameId}`)
-            localStorage.removeItem(`host_ice_${gameId}`)
-            localStorage.removeItem(`guest_ice_${gameId}`)
-        }
-    }
-
-    const generateGameId = () => {
+    const generateGameCode = () => {
         return Math.random().toString(36).substring(2, 8).toUpperCase()
     }
 
@@ -55,125 +44,42 @@ export default function WebRTCTicTacToe({ onWin }) {
             return
         }
 
-        const newGameId = generateGameId()
-        setGameId(newGameId)
+        const newGameCode = generateGameCode()
+        setGameCode(newGameCode)
         setPlayerSymbol('X')
         setGameState('hosting')
-        
+        setConnectionStatus('connecting')
+
         try {
-            // Create peer connection
-            const pc = new RTCPeerConnection({
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
-            })
-
-            peerConnection.current = pc
-
-            // Create data channel for game communication
-            const dc = pc.createDataChannel('game', {
-                ordered: true
-            })
+            webrtcManager.current = new WebRTCManager()
             
-            setupDataChannel(dc)
-            dataChannel.current = dc
+            // Initialize WebRTC with automatic signaling
+            const id = await webrtcManager.current.initialize(newGameCode, playerName, true)
+            setPeerId(id)
 
-            // Handle ICE candidates
-            pc.onicecandidate = (event) => {
-                if (event.candidate) {
-                    console.log('Host ICE candidate:', event.candidate)
-                    // Store ICE candidate for manual exchange
-                    const hostIce = JSON.parse(localStorage.getItem(`host_ice_${newGameId}`) || '[]')
-                    hostIce.push(event.candidate)
-                    localStorage.setItem(`host_ice_${newGameId}`, JSON.stringify(hostIce))
-                }
+            // Set up event handlers
+            webrtcManager.current.onPlayerConnect = (metadata) => {
+                setOpponentName(metadata?.name || 'Player 2')
+                setConnectionStatus('connected')
+                setGameState('playing')
+                setVoiceEnabled(true)
             }
 
-            // Create offer
-            const offer = await pc.createOffer()
-            await pc.setLocalDescription(offer)
-
-            // Store offer for guest to retrieve (using a public paste service for demo)
-            const offerData = {
-                offer: offer,
-                timestamp: Date.now()
+            webrtcManager.current.onGameMove = (moveData) => {
+                handleOpponentMove(moveData.position, moveData.player)
             }
-            
-            // For demo purposes, we'll use localStorage with a different approach
-            // In production, you'd use a proper signaling server
-            localStorage.setItem(`webrtc_game_${newGameId}`, JSON.stringify(offerData))
-            
-            setConnectionStatus('waiting for opponent')
 
-            // Start checking for guest's answer
-            checkForGuestAnswer(newGameId)
-
-            // Show manual exchange instructions
-            setTimeout(() => {
-                if (gameState === 'hosting') {
-                    showManualExchangeInstructions(newGameId, offer)
+            webrtcManager.current.onVoiceConnect = (remoteStream) => {
+                if (audioRef.current) {
+                    audioRef.current.srcObject = remoteStream
                 }
-            }, 2000)
+            }
 
         } catch (error) {
             console.error('Error creating game:', error)
-            alert('Failed to create game. Please try again.')
+            alert('Failed to create game. Please check microphone permissions.')
             setGameState('menu')
         }
-    }
-
-    const showManualExchangeInstructions = (gameId, offer) => {
-        const offerText = JSON.stringify(offer)
-        console.log('=== HOST OFFER (Copy this and send to guest) ===')
-        console.log(offerText)
-        console.log('=== END OFFER ===')
-        
-        // Also show in a more user-friendly way
-        const instructions = `
-GAME CREATED! 
-
-To connect with your friend:
-
-1. Copy this OFFER data and send it to your friend:
-${offerText.substring(0, 100)}...
-
-2. Wait for your friend to send you their ANSWER data
-3. Paste the ANSWER in the console when prompted
-
-Game Code: ${gameId}
-        `
-        console.log(instructions)
-    }
-
-    const checkForGuestAnswer = async (gameId) => {
-        const checkInterval = setInterval(async () => {
-            const answerData = localStorage.getItem(`answer_${gameId}`)
-            if (answerData) {
-                try {
-                    const answer = JSON.parse(answerData)
-                    await peerConnection.current.setRemoteDescription(answer)
-                    
-                    // Add any pending ICE candidates
-                    const guestIceData = localStorage.getItem(`guest_ice_${gameId}`)
-                    if (guestIceData) {
-                        const guestIce = JSON.parse(guestIceData)
-                        if (Array.isArray(guestIce)) {
-                            for (const candidate of guestIce) {
-                                await peerConnection.current.addIceCandidate(candidate)
-                            }
-                        }
-                    }
-                    
-                    clearInterval(checkInterval)
-                } catch (error) {
-                    console.error('Error processing answer:', error)
-                }
-            }
-        }, 2000) // Check every 2 seconds
-
-        // Stop checking after 5 minutes
-        setTimeout(() => clearInterval(checkInterval), 300000)
     }
 
     const joinGame = async () => {
@@ -189,172 +95,49 @@ Game Code: ${gameId}
 
         setGameState('joining')
         setPlayerSymbol('O')
+        setConnectionStatus('connecting')
 
         try {
-            // For demo, we'll use a manual exchange approach
-            // In production, you'd fetch from a signaling server
+            webrtcManager.current = new WebRTCManager()
             
-            // Try to get offer from localStorage first (for same browser testing)
-            let offerData = localStorage.getItem(`webrtc_game_${joinCode}`)
+            // Initialize WebRTC
+            const id = await webrtcManager.current.initialize(joinCode, playerName, false)
+            setPeerId(id)
+
+            // Prompt for host's PeerJS ID (this is the only manual step needed)
+            const hostPeerId = prompt(`Enter the Host's PeerJS ID (they should see this in their console):\n\nIt looks like: abc123-def456-789...`)
             
-            if (!offerData) {
-                // Prompt user to manually paste the offer
-                const offerText = prompt('Please paste the OFFER data from your friend:')
-                if (!offerText) {
-                    alert('Game connection cancelled.')
-                    setGameState('menu')
-                    return
-                }
-                
-                try {
-                    const offer = JSON.parse(offerText)
-                    offerData = JSON.stringify({ offer: offer, timestamp: Date.now() })
-                } catch (error) {
-                    alert('Invalid OFFER data. Please copy the complete offer from your friend.')
-                    setGameState('menu')
-                    return
-                }
+            if (!hostPeerId) {
+                alert('Connection cancelled.')
+                setGameState('menu')
+                return
             }
 
-            // Create peer connection
-            const pc = new RTCPeerConnection({
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
-            })
+            // Connect to host
+            await webrtcManager.current.connectToHost(hostPeerId, playerName)
 
-            peerConnection.current = pc
-
-            // Handle data channel
-            pc.ondatachannel = (event) => {
-                const dc = event.channel
-                setupDataChannel(dc)
-                dataChannel.current = dc
+            // Set up event handlers
+            webrtcManager.current.onPlayerConnect = (metadata) => {
+                setOpponentName(metadata?.name || 'Player 1')
+                setConnectionStatus('connected')
+                setGameState('playing')
+                setVoiceEnabled(true)
             }
 
-            // Handle ICE candidates
-            pc.onicecandidate = (event) => {
-                if (event.candidate) {
-                    console.log('Guest ICE candidate:', event.candidate)
-                    const guestIce = JSON.parse(localStorage.getItem(`guest_ice_${joinCode}`) || '[]')
-                    guestIce.push(event.candidate)
-                    localStorage.setItem(`guest_ice_${joinCode}`, JSON.stringify(guestIce))
+            webrtcManager.current.onGameMove = (moveData) => {
+                handleOpponentMove(moveData.position, moveData.player)
+            }
+
+            webrtcManager.current.onVoiceConnect = (remoteStream) => {
+                if (audioRef.current) {
+                    audioRef.current.srcObject = remoteStream
                 }
             }
-
-            setConnectionStatus('connecting')
-
-            // Parse and set the offer
-            const parsedData = JSON.parse(offerData)
-            const offer = parsedData.offer
-            await pc.setRemoteDescription(offer)
-
-            // Create answer
-            const answer = await pc.createAnswer()
-            await pc.setLocalDescription(answer)
-
-            // Show the answer to the user to send back to host
-            console.log('=== GUEST ANSWER (Copy this and send to host) ===')
-            console.log(JSON.stringify(answer))
-            console.log('=== END ANSWER ===')
-            
-            alert(`ANSWER created! Copy this data from the console and send it to your friend:\n\n${JSON.stringify(answer).substring(0, 100)}...`)
-
-            // Store answer for host to retrieve (for same browser testing)
-            localStorage.setItem(`answer_${joinCode}`, JSON.stringify(answer))
-
-            // Check for host's ICE candidates
-            checkForHostIce(joinCode)
 
         } catch (error) {
             console.error('Error joining game:', error)
-            alert('Failed to join game. Please try again.')
+            alert('Failed to join game. Please check microphone permissions and the PeerJS ID.')
             setGameState('menu')
-        }
-    }
-
-    const checkForHostIce = async (gameId) => {
-        const checkInterval = setInterval(async () => {
-            const hostIceData = localStorage.getItem(`host_ice_${gameId}`)
-            if (hostIceData) {
-                try {
-                    const hostIce = JSON.parse(hostIceData)
-                    if (Array.isArray(hostIce)) {
-                        for (const candidate of hostIce) {
-                            await peerConnection.current.addIceCandidate(candidate)
-                        }
-                    }
-                    clearInterval(checkInterval)
-                } catch (error) {
-                    console.error('Error adding host ICE candidate:', error)
-                }
-            }
-        }, 2000) // Check every 2 seconds
-
-        // Stop checking after 5 minutes
-        setTimeout(() => clearInterval(checkInterval), 300000)
-    }
-
-    // Add function to handle manual answer input for host
-    const handleManualAnswerInput = () => {
-        if (gameState === 'hosting') {
-            const answerText = prompt('Please paste the ANSWER data from your friend:')
-            if (answerText) {
-                try {
-                    const answer = JSON.parse(answerText)
-                    localStorage.setItem(`answer_${gameId}`, JSON.stringify(answer))
-                } catch (error) {
-                    alert('Invalid ANSWER data. Please copy the complete answer from your friend.')
-                }
-            }
-        }
-    }
-
-    const setupDataChannel = (dc) => {
-        dc.onopen = () => {
-            console.log('Data channel opened')
-            setConnectionStatus('connected')
-            setGameState('playing')
-            
-            // Send player info
-            dc.send(JSON.stringify({
-                type: 'playerInfo',
-                name: playerName,
-                symbol: playerSymbol
-            }))
-        }
-
-        dc.onmessage = (event) => {
-            const message = JSON.parse(event.data)
-            handleGameMessage(message)
-        }
-
-        dc.onclose = () => {
-            console.log('Data channel closed')
-            setConnectionStatus('disconnected')
-        }
-
-        dc.onerror = (error) => {
-            console.error('Data channel error:', error)
-        }
-    }
-
-    const handleGameMessage = (message) => {
-        switch (message.type) {
-            case 'playerInfo':
-                setOpponentName(message.name)
-                break
-            case 'move':
-                handleOpponentMove(message.position, message.player)
-                break
-            case 'gameOver':
-                setWinner(message.winner)
-                setGameState('ended')
-                break
-            case 'restart':
-                restartGame()
-                break
         }
     }
 
@@ -381,14 +164,6 @@ Game Code: ${gameId}
         if (gameWinner) {
             setWinner(gameWinner)
             setGameState('ended')
-            
-            // Notify other player
-            if (dataChannel.current) {
-                dataChannel.current.send(JSON.stringify({
-                    type: 'gameOver',
-                    winner: gameWinner
-                }))
-            }
         }
     }
 
@@ -403,12 +178,12 @@ Game Code: ${gameId}
         setCurrentPlayer(playerSymbol === 'X' ? 'O' : 'X')
 
         // Send move to opponent
-        if (dataChannel.current) {
-            dataChannel.current.send(JSON.stringify({
+        if (webrtcManager.current) {
+            webrtcManager.current.sendGameMove({
                 type: 'move',
                 position: index,
                 player: playerSymbol
-            }))
+            })
         }
 
         // Check for winner
@@ -430,33 +205,40 @@ Game Code: ${gameId}
             setGameState('ended')
             
             // Notify opponent
-            if (dataChannel.current) {
-                dataChannel.current.send(JSON.stringify({
+            if (webrtcManager.current) {
+                webrtcManager.current.sendGameMove({
                     type: 'gameOver',
                     winner: gameWinner
-                }))
+                })
             }
         }
     }
 
-    const restartGame = () => {
-        setBoard(Array(9).fill(null))
-        setCurrentPlayer('X')
-        setWinner(null)
-        setGameState('playing')
+    const toggleMute = () => {
+        if (webrtcManager.current && webrtcManager.current.localStream) {
+            const audioTracks = webrtcManager.current.localStream.getAudioTracks()
+            audioTracks.forEach(track => {
+                track.enabled = !track.enabled
+            })
+            setIsMuted(!isMuted)
+        }
     }
 
     const leaveGame = () => {
-        cleanup()
+        if (webrtcManager.current) {
+            webrtcManager.current.cleanup()
+        }
         setGameState('menu')
         setPlayerName('')
         setOpponentName('')
-        setGameId('')
+        setGameCode('')
         setJoinCode('')
         setConnectionStatus('disconnected')
         setBoard(Array(9).fill(null))
         setCurrentPlayer('X')
         setWinner(null)
+        setVoiceEnabled(false)
+        setIsMuted(false)
     }
 
     const getCellContent = (value) => {
@@ -474,10 +256,10 @@ Game Code: ${gameId}
 
     const getTurnMessage = () => {
         if (gameState === 'hosting') {
-            return 'Share this code with your friend and wait for them to join...'
+            return `Share your PeerJS ID: ${peerId.substring(0, 20)}...`
         }
         if (gameState === 'joining') {
-            return 'Establishing secure connection...'
+            return 'Connecting to host...'
         }
         if (gameState === 'playing') {
             return currentPlayer === playerSymbol ? 'Your turn!' : `${opponentName}'s turn`
@@ -489,7 +271,6 @@ Game Code: ${gameId}
         switch (connectionStatus) {
             case 'connected': return '#48bb78'
             case 'connecting': return '#ed8936'
-            case 'waiting for opponent': return '#4299e1'
             default: return '#e53e3e'
         }
     }
@@ -515,7 +296,7 @@ Game Code: ${gameId}
                     textAlign: 'center',
                     boxShadow: '0 8px 25px rgba(0, 0, 0, 0.2)',
                     border: '2px solid #667eea',
-                    maxWidth: '400px'
+                    maxWidth: '450px'
                 }}>
                     <h2 style={{
                         color: '#4a5568',
@@ -523,7 +304,7 @@ Game Code: ${gameId}
                         marginBottom: '25px',
                         fontFamily: 'Georgia, serif'
                     }}>
-                        🌐 WebRTC Tic-Tac-Toe
+                        🌐 Advanced WebRTC Game
                     </h2>
                     
                     <div style={{ marginBottom: '20px' }}>
@@ -568,7 +349,7 @@ Game Code: ${gameId}
                                 boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)'
                             }}
                         >
-                            Create New Game
+                            🎮 Create New Game
                         </button>
                         
                         <div style={{ color: '#718096', fontSize: '0.9rem' }}>
@@ -623,11 +404,11 @@ Game Code: ${gameId}
                         fontSize: '0.85rem',
                         color: '#4a5568'
                     }}>
-                        <strong>🚀 WebRTC Benefits:</strong><br/>
-                        • Direct peer-to-peer connection<br/>
-                        • Ultra-low latency gameplay<br/>
+                        <strong>🚀 Features:</strong><br/>
+                        • Automatic P2P connection<br/>
+                        • Voice chat during gameplay<br/>
                         • No server required for moves<br/>
-                        • Works even with slow internet
+                        • Works globally with PeerJS
                     </div>
                 </div>
             </div>
@@ -648,6 +429,39 @@ Game Code: ${gameId}
             fontFamily: 'Georgia, serif',
             position: 'relative'
         }}>
+            <audio ref={audioRef} autoPlay playsInline />
+
+            {/* Voice Chat Controls */}
+            {voiceEnabled && (
+                <div style={{
+                    position: 'absolute',
+                    top: '10px',
+                    left: '10px',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    padding: '10px',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    gap: '10px',
+                    alignItems: 'center'
+                }}>
+                    <span style={{ fontSize: '0.9rem', color: '#4a5568' }}>🎤 Voice:</span>
+                    <button
+                        onClick={toggleMute}
+                        style={{
+                            background: isMuted ? '#e53e3e' : '#48bb78',
+                            color: 'white',
+                            border: 'none',
+                            padding: '5px 10px',
+                            borderRadius: '15px',
+                            fontSize: '0.8rem',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {isMuted ? 'Unmute' : 'Mute'}
+                    </button>
+                </div>
+            )}
+
             <button
                 onClick={leaveGame}
                 style={{
@@ -698,7 +512,7 @@ Game Code: ${gameId}
                     </div>
                 </div>
                 
-                {gameId && (
+                {gameCode && (
                     <div style={{
                         fontSize: '1rem',
                         color: '#4a5568',
@@ -710,7 +524,7 @@ Game Code: ${gameId}
                             background: '#f0f0f0', 
                             padding: '2px 6px', 
                             borderRadius: '4px' 
-                        }}>{gameId}</span>
+                        }}>{gameCode}</span>
                     </div>
                 )}
                 
@@ -756,65 +570,16 @@ Game Code: ${gameId}
                         border: '2px solid #667eea',
                         marginBottom: '10px'
                     }}>
-                        {gameId}
+                        {gameCode}
                     </div>
                     <div style={{
-                        fontSize: '0.9rem',
+                        fontSize: '0.8rem',
                         color: '#718096',
                         fontStyle: 'italic',
-                        marginBottom: '15px'
+                        marginBottom: '10px'
                     }}>
-                        Check console (F12) for OFFER data to send to your friend
+                        Also share your PeerJS ID from console (F12)
                     </div>
-                    <button
-                        onClick={handleManualAnswerInput}
-                        style={{
-                            background: 'linear-gradient(45deg, #48bb78, #38a169)',
-                            color: 'white',
-                            border: 'none',
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            fontSize: '0.9rem',
-                            cursor: 'pointer',
-                            fontFamily: 'Georgia, serif',
-                            fontWeight: 'bold'
-                        }}
-                    >
-                        Paste Friend's Answer
-                    </button>
-                </div>
-            )}
-
-            {gameState === 'joining' && (
-                <div style={{
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    padding: '20px',
-                    borderRadius: '10px',
-                    textAlign: 'center',
-                    marginBottom: '20px'
-                }}>
-                    <div style={{ 
-                        fontSize: '1.1rem', 
-                        color: '#4a5568', 
-                        marginBottom: '15px' 
-                    }}>
-                        Connecting to game...
-                    </div>
-                    <div style={{
-                        display: 'inline-block',
-                        width: '20px',
-                        height: '20px',
-                        border: '3px solid #f3f3f3',
-                        borderTop: '3px solid #667eea',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                    }} />
-                    <style>{`
-                        @keyframes spin {
-                            0% { transform: rotate(0deg); }
-                            100% { transform: rotate(360deg); }
-                        }
-                    `}</style>
                 </div>
             )}
 
@@ -885,40 +650,22 @@ Game Code: ${gameId}
                         }}>
                             {getWinnerMessage()}
                         </h3>
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                            <button
-                                onClick={restartGame}
-                                style={{
-                                    background: 'linear-gradient(45deg, #667eea, #764ba2)',
-                                    color: 'white',
-                                    border: 'none',
-                                    padding: '10px 20px',
-                                    borderRadius: '20px',
-                                    fontSize: '1rem',
-                                    cursor: 'pointer',
-                                    fontFamily: 'Georgia, serif',
-                                    fontWeight: 'bold'
-                                }}
-                            >
-                                Play Again
-                            </button>
-                            <button
-                                onClick={leaveGame}
-                                style={{
-                                    background: 'linear-gradient(45deg, #f56565, #e53e3e)',
-                                    color: 'white',
-                                    border: 'none',
-                                    padding: '10px 20px',
-                                    borderRadius: '20px',
-                                    fontSize: '1rem',
-                                    cursor: 'pointer',
-                                    fontFamily: 'Georgia, serif',
-                                    fontWeight: 'bold'
-                                }}
-                            >
-                                Leave Game
-                            </button>
-                        </div>
+                        <button
+                            onClick={leaveGame}
+                            style={{
+                                background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                                color: 'white',
+                                border: 'none',
+                                padding: '10px 20px',
+                                borderRadius: '20px',
+                                fontSize: '1rem',
+                                cursor: 'pointer',
+                                fontFamily: 'Georgia, serif',
+                                fontWeight: 'bold'
+                            }}
+                        >
+                            Play Again
+                        </button>
                     </motion.div>
                 )}
             </AnimatePresence>

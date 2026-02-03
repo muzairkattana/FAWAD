@@ -4,7 +4,7 @@ import confetti from 'canvas-confetti'
 import AntiqueChat from './AntiqueChat'
 import ValentineGame from './ValentineGame'
 import TicTacToeGame from './TicTacToeGame'
-import WebRTCTicTacToe from './WebRTCTicTacToe'
+import AdvancedWebRTCTicTacToe from './AdvancedWebRTCTicTacToe'
 
 export default function ThankYou({ onLogout }) {
     const [isOpen, setIsOpen] = useState(false)
@@ -22,7 +22,7 @@ export default function ThankYou({ onLogout }) {
     const [showChat, setShowChat] = useState(false)
     const [showGame, setShowGame] = useState(false)
     const [showTicTacToe, setShowTicTacToe] = useState(false)
-    const [showWebRTCTicTacToe, setShowWebRTCTicTacToe] = useState(false)
+    const [showAdvancedWebRTC, setShowAdvancedWebRTC] = useState(false)
 
     const reasons = [
         "Your smile debugs my worst days ☀️",
@@ -295,7 +295,7 @@ export default function ThankYou({ onLogout }) {
                             Fawad (Hypervisor)
                         </div>
 
-                        {showReasons && !showChat && !showGame && !showTicTacToe && !showWebRTCTicTacToe && (
+                        {showReasons && !showChat && !showGame && !showTicTacToe && !showAdvancedWebRTC && (
                             <div style={{ textAlign: 'center', marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <motion.button
                                     whileHover={{ scale: 1.1 }}
@@ -449,7 +449,7 @@ export default function ThankYou({ onLogout }) {
                                         <motion.button
                                             whileHover={{ scale: 1.05, rotate: 2 }}
                                             whileTap={{ scale: 0.95 }}
-                                            onClick={() => setShowWebRTCTicTacToe(true)}
+                                            onClick={() => setShowAdvancedWebRTC(true)}
                                             style={{
                                                 background: 'linear-gradient(45deg, #f093fb, #f5576c)',
                                                 color: 'white',
@@ -464,7 +464,7 @@ export default function ThankYou({ onLogout }) {
                                                 width: '100%'
                                             }}
                                         >
-                                            🌐 WEBRTC MULTIPLAYER
+                                            🌐 WEBRTC VOICE GAME
                                         </motion.button>
                                     </div>
                                 </motion.div>
@@ -499,14 +499,14 @@ export default function ThankYou({ onLogout }) {
                     </AnimatePresence>
 
                     <AnimatePresence>
-                        {showWebRTCTicTacToe && (
+                        {showAdvancedWebRTC && (
                             <motion.div
                                 initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: '600px' }}
+                                animate={{ opacity: 1, height: '650px' }}
                                 exit={{ opacity: 0, height: 0 }}
                                 style={{ width: '100%', marginBottom: '20px' }}
                             >
-                                <WebRTCTicTacToe onWin={() => { setShowWebRTCTicTacToe(false); setShowChat(true); }} />
+                                <AdvancedWebRTCTicTacToe onWin={() => { setShowAdvancedWebRTC(false); setShowChat(true); }} />
                             </motion.div>
                         )}
                     </AnimatePresence>
