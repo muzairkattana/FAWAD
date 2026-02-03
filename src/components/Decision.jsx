@@ -20,14 +20,47 @@ export default function Decision({ onYes, onNo }) {
         'Try the other one!',
         'Nice try!',
         'Nope!',
-        'Not this one!'
+        'Not this one!',
+        'You can\'t catch me! 😜',
+        'Too slow! ⚡',
+        'Nice attempt! 😂',
+        'Keep trying! 🏃‍♀️',
+        'Almost there! (not really) 🤪',
+        'Your mouse is broken! 🖱️',
+        'I\'m invincible! 💪',
+        'Give up yet? 😏',
+        'This is fun! 🎮',
+        'You\'ll never get me! 🏃',
+        'Touch me if you can! 👆',
+        'I\'m like a ghost! 👻',
+        'Nope! Not today! 🙅‍♀️',
+        'Try harder! 💪',
+        'I\'m everywhere! 🌍',
+        'Catch me if you can! 🏃‍♀️',
+        'You\'re getting warmer! (cold actually) 🧊'
     ]
 
-    const moveNoButton = () => {
-        // Move it slightly to make it "shy"
-        const x = Math.random() * 200 - 100
-        const y = Math.random() * 200 - 100
-        setNoPos({ x, y })
+    const moveNoButton = (e) => {
+        e.preventDefault()
+        
+        // Get viewport dimensions
+        const viewportWidth = window.innerWidth
+        const viewportHeight = window.innerHeight
+        const buttonWidth = 120
+        const buttonHeight = 50
+        
+        // Calculate safe zones (avoid moving off screen)
+        const maxX = viewportWidth - buttonWidth - 50
+        const maxY = viewportHeight - buttonHeight - 50
+        const minX = 50
+        const minY = 100
+        
+        // Generate random position within safe zones
+        const randomX = Math.random() * (maxX - minX) + minX
+        const randomY = Math.random() * (maxY - minY) + minY
+        
+        // Move button to random position
+        setNoPos({ x: randomX - (viewportWidth / 2), y: randomY - (viewportHeight / 2) })
         setNoCount(prev => prev + 1)
 
         // Change text randomly
@@ -35,7 +68,7 @@ export default function Decision({ onYes, onNo }) {
         setNoText(noTexts[randomIndex])
 
         // Make YES bigger
-        setYesScale(prev => Math.min(prev + 0.1, 2.5)) // Cap at 2.5x
+        setYesScale(prev => Math.min(prev + 0.05, 3)) // Cap at 3x
     }
 
     const handleNoClick = () => {
@@ -63,7 +96,7 @@ export default function Decision({ onYes, onNo }) {
                 fontFamily: 'var(--font-fun)',
                 fontSize: window.innerWidth < 768 ? '1.8rem' : '2.5rem'
             }}>
-                Hypervisor has a very important question for you 🥹💌
+                Thanks for being my bestie 🥹💌
             </h1>
 
             <div className="hearts-bg">
@@ -111,7 +144,11 @@ export default function Decision({ onYes, onNo }) {
                     animate={noPos}
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                     onMouseEnter={moveNoButton}
-                    onClick={handleNoClick}
+                    onTouchStart={moveNoButton}
+                    onClick={(e) => {
+                        e.preventDefault()
+                        moveNoButton(e)
+                    }}
                     style={{
                         padding: '15px 40px',
                         fontSize: '1.2rem',
@@ -119,14 +156,19 @@ export default function Decision({ onYes, onNo }) {
                         color: '#666',
                         borderRadius: '50px',
                         border: 'none',
-                        position: 'relative'
+                        position: 'relative',
+                        cursor: 'not-allowed',
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                        MozUserSelect: 'none',
+                        msUserSelect: 'none'
                     }}
                 >
                     {noText}
                 </motion.button>
             </div>
 
-            {noCount > 2 && <p style={{ marginTop: '20px', fontSize: '0.9rem', color: '#999' }}>Why are you trying to click No? 😢</p>}
+            {noCount > 5 && <p style={{ marginTop: '20px', fontSize: '0.9rem', color: '#999', fontStyle: 'italic' }}>Why are you trying to click No? Just say YES already! 😢</p>}
 
         </motion.div>
     )

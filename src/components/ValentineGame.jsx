@@ -6,12 +6,26 @@ export default function ValentineGame({ onWin }) {
     const [hearts, setHearts] = useState([])
     const [gameOver, setGameOver] = useState(false)
     const [gameStarted, setGameStarted] = useState(false)
+    const [level, setLevel] = useState(1)
+    const [levelScore, setLevelScore] = useState(0)
+    const [showLevelComplete, setShowLevelComplete] = useState(false)
+
+    const levels = [
+        { name: 'Beginner Love', target: 10, speed: 2, spawnRate: 1000, heartSize: { min: 30, max: 50 } },
+        { name: 'Sweet Heart', target: 15, speed: 1.8, spawnRate: 800, heartSize: { min: 25, max: 45 } },
+        { name: 'Love Master', target: 20, speed: 1.5, spawnRate: 600, heartSize: { min: 20, max: 40 } },
+        { name: 'Cupid Champion', target: 25, speed: 1.2, spawnRate: 500, heartSize: { min: 15, max: 35 } },
+        { name: 'Legendary Love', target: 30, speed: 1, spawnRate: 400, heartSize: { min: 10, max: 30 } }
+    ]
+
+    const currentLevel = levels[level - 1] || levels[0]
 
     const spawnHeart = useCallback(() => {
         const id = Date.now() + Math.random()
         const x = Math.random() * (window.innerWidth - (window.innerWidth < 768 ? 80 : 50))
-        const size = (window.innerWidth < 768 ? 20 : 30) + Math.random() * (window.innerWidth < 768 ? 20 : 30)
-        const duration = 2 + Math.random() * 2
+        const sizeRange = currentLevel.heartSize
+        const size = sizeRange.min + Math.random() * (sizeRange.max - sizeRange.min)
+        const duration = currentLevel.speed + Math.random() * 1
 
         setHearts(prev => [...prev, { id, x, size, duration }])
 
@@ -19,24 +33,34 @@ export default function ValentineGame({ onWin }) {
         setTimeout(() => {
             setHearts(prev => prev.filter(h => h.id !== id))
         }, duration * 1000)
-    }, [])
+    }, [currentLevel])
 
     useEffect(() => {
-        if (gameStarted && !gameOver) {
-            const interval = setInterval(spawnHeart, 800)
+        if (gameStarted && !gameOver && !showLevelComplete) {
+            const interval = setInterval(spawnHeart, currentLevel.spawnRate)
             return () => clearInterval(interval)
         }
-    }, [gameStarted, gameOver, spawnHeart])
+    }, [gameStarted, gameOver, showLevelComplete, spawnHeart, currentLevel.spawnRate])
 
     useEffect(() => {
-        if (score >= 15) {
-            setGameOver(true)
-            setTimeout(onWin, 2000)
+        if (levelScore >= currentLevel.target) {
+            setShowLevelComplete(true)
+            setTimeout(() => {
+                if (level >= levels.length) {
+                    setGameOver(true)
+                    setTimeout(onWin, 2000)
+                } else {
+                    setLevel(prev => prev + 1)
+                    setLevelScore(0)
+                    setShowLevelComplete(false)
+                }
+            }, 2000)
         }
-    }, [score, onWin])
+    }, [levelScore, level, currentLevel.target, levels.length, onWin])
 
     const catchHeart = (id) => {
         setScore(prev => prev + 1)
+        setLevelScore(prev => prev + 1)
         setHearts(prev => prev.filter(h => h.id !== id))
     }
 
@@ -58,7 +82,10 @@ export default function ValentineGame({ onWin }) {
             {!gameStarted ? (
                 <div style={{ textAlign: 'center', zIndex: 10 }}>
                     <h2 style={{ color: '#ff4757', fontFamily: 'var(--font-fun)', fontSize: window.innerWidth < 768 ? '1.5rem' : '2rem' }}>Heart Catcher 🏹</h2>
-                    <p style={{ color: '#5d4037', marginBottom: '20px', fontSize: window.innerWidth < 768 ? '0.9rem' : '1rem' }}>Catch 15 hearts to reveal the secret!</p>
+                    <p style={{ color: '#5d4037', marginBottom: '20px', fontSize: window.innerWidth < 768 ? '0.9rem' : '1rem' }}>Level {level}: {currentLevel.name} - Catch {currentLevel.target} hearts!</p>
+                    <div style={{ marginBottom: '20px', fontSize: window.innerWidth < 768 ? '1rem' : '1.2rem', color: '#ff6b81' }}>
+                        Total Score: {score} | Level Progress: {levelScore}/{currentLevel.target}
+                    </div>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
@@ -82,12 +109,15 @@ export default function ValentineGame({ onWin }) {
                         position: 'absolute',
                         top: '20px',
                         left: '20px',
-                        fontSize: window.innerWidth < 768 ? '1.2rem' : '1.5rem',
+                        fontSize: window.innerWidth < 768 ? '1rem' : '1.2rem',
                         fontWeight: 'bold',
                         color: '#ff4757',
-                        zIndex: 10
+                        zIndex: 10,
+                        textAlign: 'left'
                     }}>
-                        Hearts: {score} / 15
+                        Level {level}<br />
+                        Hearts: {levelScore}/{currentLevel.target}<br />
+                        Total: {score}
                     </div>
 
                     <AnimatePresence>
@@ -110,6 +140,25 @@ export default function ValentineGame({ onWin }) {
                         ))}
                     </AnimatePresence>
 
+                    {showLevelComplete && (
+                        <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            style={{
+                                position: 'absolute',
+                                background: 'white',
+                                padding: '30px',
+                                borderRadius: '20px',
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                                textAlign: 'center',
+                                zIndex: 100
+                            }}
+                        >
+                            <h2 style={{ color: '#ff4757', fontSize: window.innerWidth < 768 ? '1.5rem' : '2rem' }}>Level {level} Complete! 🎉</h2>
+                            <p style={{ fontSize: window.innerWidth < 768 ? '0.9rem' : '1rem' }}>Great job! Get ready for Level {level + 1}!</p>
+                        </motion.div>
+                    )}
+
                     {gameOver && (
                         <motion.div
                             initial={{ scale: 0 }}
@@ -124,8 +173,8 @@ export default function ValentineGame({ onWin }) {
                                 zIndex: 100
                             }}
                         >
-                            <h2 style={{ color: '#ff4757' }}>Well Done! 🎉</h2>
-                            <p>You caught all the love!</p>
+                            <h2 style={{ color: '#ff4757', fontSize: window.innerWidth < 768 ? '1.5rem' : '2rem' }}>Legendary Love Master! �</h2>
+                            <p style={{ fontSize: window.innerWidth < 768 ? '0.9rem' : '1rem' }}>You caught all {score} hearts! You're amazing!</p>
                         </motion.div>
                     )}
                 </>
