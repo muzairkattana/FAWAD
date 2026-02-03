@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { appAuth } from '../lib/adminAuth'
 
 export default function Login({ onLogin }) {
     const [username, setUsername] = useState('')
@@ -147,6 +148,27 @@ export default function Login({ onLogin }) {
                         {error}
                     </motion.p>
                 )}
+
+                <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => window.location.href = '/admin'}
+                        style={{
+                            background: 'transparent',
+                            color: '#718096',
+                            border: '1px solid #cbd5e0',
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            fontFamily: 'Georgia, serif',
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        🔐 Admin Access
+                    </motion.button>
+                </div>
             </motion.div>
         </div>
     )

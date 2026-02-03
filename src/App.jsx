@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Login from './components/Login'
 import Decision from './components/Decision'
@@ -7,10 +7,19 @@ import ThankYou from './components/ThankYou'
 import NoPath from './components/NoPath'
 import MusicPlayer from './components/MusicPlayer'
 import CursorTrail from './components/CursorTrail'
+import AdminApp from './components/AdminApp'
 import './styles/global.css'
 
 function App() {
     const [page, setPage] = useState('login')
+    const [isAdmin, setIsAdmin] = useState(false)
+
+    useEffect(() => {
+        // Check if we're on the admin route
+        if (window.location.pathname === '/admin') {
+            setIsAdmin(true)
+        }
+    }, [])
 
     const renderPage = () => {
         switch (page) {
@@ -73,7 +82,11 @@ function App() {
             <CursorTrail />
             {/* <MusicPlayer /> */}
             <AnimatePresence mode="wait">
-                {renderPage()}
+                {isAdmin ? (
+                    <AdminApp />
+                ) : (
+                    renderPage()
+                )}
             </AnimatePresence>
         </div>
     )
