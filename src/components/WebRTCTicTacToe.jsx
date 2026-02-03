@@ -15,8 +15,6 @@ export default function WebRTCTicTacToe({ onWin }) {
     
     const peerConnection = useRef(null)
     const dataChannel = useRef(null)
-    const localConnectionRef = useRef(null)
-    const remoteConnectionRef = useRef(null)
 
     const winningCombinations = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
@@ -37,11 +35,13 @@ export default function WebRTCTicTacToe({ onWin }) {
         if (peerConnection.current) {
             peerConnection.current.close()
         }
-        if (localConnectionRef.current) {
-            localConnectionRef.current.close()
-        }
-        if (remoteConnectionRef.current) {
-            remoteConnectionRef.current.close()
+        
+        // Clean up localStorage data
+        if (gameId) {
+            localStorage.removeItem(`offer_${gameId}`)
+            localStorage.removeItem(`answer_${gameId}`)
+            localStorage.removeItem(`host_ice_${gameId}`)
+            localStorage.removeItem(`guest_ice_${gameId}`)
         }
     }
 
@@ -82,7 +82,10 @@ export default function WebRTCTicTacToe({ onWin }) {
             // Handle ICE candidates
             pc.onicecandidate = (event) => {
                 if (event.candidate) {
+                    // In a real app, you'd send this to a signaling server
+                    // For demo, we'll store it for manual exchange
                     console.log('Host ICE candidate:', event.candidate)
+                    localStorage.setItem(`host_ice_${newGameId}`, JSON.stringify(event.candidate))
                 }
             }
 
@@ -90,16 +93,45 @@ export default function WebRTCTicTacToe({ onWin }) {
             const offer = await pc.createOffer()
             await pc.setLocalDescription(offer)
 
-            // Store offer for sharing (in real app, you'd send this to a signaling server)
-            localConnectionRef.current = offer
+            // Store offer for guest to retrieve
+            localStorage.setItem(`offer_${newGameId}`, JSON.stringify(offer))
             
             setConnectionStatus('waiting for opponent')
+
+            // Start checking for guest's answer
+            checkForGuestAnswer(newGameId)
 
         } catch (error) {
             console.error('Error creating game:', error)
             alert('Failed to create game. Please try again.')
             setGameState('menu')
         }
+    }
+
+    const checkForGuestAnswer = async (gameId) => {
+        const checkInterval = setInterval(async () => {
+            const answerData = localStorage.getItem(`answer_${gameId}`)
+            if (answerData) {
+                try {
+                    const answer = JSON.parse(answerData)
+                    await peerConnection.current.setRemoteDescription(answer)
+                    
+                    // Check for guest's ICE candidates
+                    const guestIceData = localStorage.getItem(`guest_ice_${gameId}`)
+                    if (guestIceData) {
+                        const guestIce = JSON.parse(guestIceData)
+                        await peerConnection.current.addIceCandidate(guestIce)
+                    }
+                    
+                    clearInterval(checkInterval)
+                } catch (error) {
+                    console.error('Error processing answer:', error)
+                }
+            }
+        }, 2000) // Check every 2 seconds
+
+        // Stop checking after 5 minutes
+        setTimeout(() => clearInterval(checkInterval), 300000)
     }
 
     const joinGame = async () => {
@@ -138,16 +170,56 @@ export default function WebRTCTicTacToe({ onWin }) {
             pc.onicecandidate = (event) => {
                 if (event.candidate) {
                     console.log('Guest ICE candidate:', event.candidate)
+                    localStorage.setItem(`guest_ice_${joinCode}`, JSON.stringify(event.candidate))
                 }
             }
 
             setConnectionStatus('connecting')
+
+            // Get the host's offer
+            const offerData = localStorage.getItem(`offer_${joinCode}`)
+            if (!offerData) {
+                alert('Game not found! Please check the game code.')
+                setGameState('menu')
+                return
+            }
+
+            const offer = JSON.parse(offerData)
+            await pc.setRemoteDescription(offer)
+
+            // Create answer
+            const answer = await pc.createAnswer()
+            await pc.setLocalDescription(answer)
+
+            // Store answer for host to retrieve
+            localStorage.setItem(`answer_${joinCode}`, JSON.stringify(answer))
+
+            // Check for host's ICE candidates
+            checkForHostIce(joinCode)
 
         } catch (error) {
             console.error('Error joining game:', error)
             alert('Failed to join game. Please try again.')
             setGameState('menu')
         }
+    }
+
+    const checkForHostIce = async (gameId) => {
+        const checkInterval = setInterval(async () => {
+            const hostIceData = localStorage.getItem(`host_ice_${gameId}`)
+            if (hostIceData) {
+                try {
+                    const hostIce = JSON.parse(hostIceData)
+                    await peerConnection.current.addIceCandidate(hostIce)
+                    clearInterval(checkInterval)
+                } catch (error) {
+                    console.error('Error adding host ICE candidate:', error)
+                }
+            }
+        }, 2000) // Check every 2 seconds
+
+        // Stop checking after 5 minutes
+        setTimeout(() => clearInterval(checkInterval), 300000)
     }
 
     const setupDataChannel = (dc) => {
@@ -293,6 +365,9 @@ export default function WebRTCTicTacToe({ onWin }) {
         setGameId('')
         setJoinCode('')
         setConnectionStatus('disconnected')
+        setBoard(Array(9).fill(null))
+        setCurrentPlayer('X')
+        setWinner(null)
     }
 
     const getCellContent = (value) => {
@@ -313,7 +388,7 @@ export default function WebRTCTicTacToe({ onWin }) {
             return 'Share this code with your friend and wait for them to join...'
         }
         if (gameState === 'joining') {
-            return 'Connecting to game...'
+            return 'Establishing secure connection...'
         }
         if (gameState === 'playing') {
             return currentPlayer === playerSymbol ? 'Your turn!' : `${opponentName}'s turn`
@@ -589,10 +664,51 @@ export default function WebRTCTicTacToe({ onWin }) {
                         background: '#f0f0f0',
                         padding: '10px',
                         borderRadius: '5px',
-                        border: '2px solid #667eea'
+                        border: '2px solid #667eea',
+                        marginBottom: '10px'
                     }}>
                         {gameId}
                     </div>
+                    <div style={{
+                        fontSize: '0.9rem',
+                        color: '#718096',
+                        fontStyle: 'italic'
+                    }}>
+                        Waiting for opponent to join...
+                    </div>
+                </div>
+            )}
+
+            {gameState === 'joining' && (
+                <div style={{
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    padding: '20px',
+                    borderRadius: '10px',
+                    textAlign: 'center',
+                    marginBottom: '20px'
+                }}>
+                    <div style={{ 
+                        fontSize: '1.1rem', 
+                        color: '#4a5568', 
+                        marginBottom: '15px' 
+                    }}>
+                        Connecting to game...
+                    </div>
+                    <div style={{
+                        display: 'inline-block',
+                        width: '20px',
+                        height: '20px',
+                        border: '3px solid #f3f3f3',
+                        borderTop: '3px solid #667eea',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                    }} />
+                    <style>{`
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    `}</style>
                 </div>
             )}
 
