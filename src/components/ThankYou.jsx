@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import AntiqueChat from './AntiqueChat'
 import ValentineGame from './ValentineGame'
+import TicTacToeGame from './TicTacToeGame'
 
 export default function ThankYou({ onLogout }) {
     const [isOpen, setIsOpen] = useState(false)
@@ -19,6 +20,7 @@ export default function ThankYou({ onLogout }) {
     const [showReasons, setShowReasons] = useState(false)
     const [showChat, setShowChat] = useState(false)
     const [showGame, setShowGame] = useState(false)
+    const [showTicTacToe, setShowTicTacToe] = useState(false)
 
     const reasons = [
         "Your smile debugs my worst days ☀️",
@@ -86,7 +88,8 @@ export default function ThankYou({ onLogout }) {
                         fontFamily: 'var(--font-antique)',
                         color: '#5d4037',
                         fontSize: window.innerWidth < 768 ? '1.5rem' : '2rem',
-                        marginBottom: '10px'
+                        marginBottom: '10px',
+                        animation: 'pulse 2s infinite'
                     }}>
                         A Secret Checkpoint 🔒
                     </h2>
@@ -96,10 +99,20 @@ export default function ThankYou({ onLogout }) {
                     <div style={{
                         marginTop: '20px',
                         fontSize: window.innerWidth < 768 ? '2rem' : '3rem',
-                        filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.2))'
+                        filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.2))',
+                        animation: 'bounce 2s infinite'
                     }}>
                         💌
                     </div>
+                    <p style={{
+                        marginTop: '15px',
+                        fontFamily: 'var(--font-typewriter)',
+                        color: '#d32f2f',
+                        fontSize: '0.9rem',
+                        fontStyle: 'italic'
+                    }}>
+                        Click here to reveal your special message! ✨
+                    </p>
                 </motion.div>
             ) : (
                 <div style={{ width: '100%', maxWidth: '900px', display: 'flex', flexDirection: 'column', gap: '40px', alignItems: 'center' }}>
@@ -177,18 +190,30 @@ export default function ThankYou({ onLogout }) {
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => setShowReasons(true)}
                                         style={{
-                                            background: 'var(--primary)',
+                                            background: 'linear-gradient(45deg, #ff6b81, #ff8fa3)',
                                             color: 'white',
-                                            padding: '10px 20px',
-                                            borderRadius: '20px',
+                                            padding: '12px 25px',
+                                            borderRadius: '25px',
                                             cursor: 'pointer',
                                             border: 'none',
                                             fontFamily: 'var(--font-main)',
-                                            fontSize: '0.9rem'
+                                            fontSize: window.innerWidth < 768 ? '0.9rem' : '1rem',
+                                            boxShadow: '0 8px 25px rgba(255, 107, 129, 0.4)',
+                                            fontWeight: 'bold',
+                                            animation: 'pulse 2s infinite'
                                         }}
                                     >
-                                        Reveal 5 Reasons Why You're Amazing ✨
+                                        🌟 Reveal 5 Reasons Why You're Amazing 🌟
                                     </motion.button>
+                                    <p style={{
+                                        marginTop: '10px',
+                                        fontFamily: 'var(--font-typewriter)',
+                                        color: '#795548',
+                                        fontSize: '0.8rem',
+                                        fontStyle: 'italic'
+                                    }}>
+                                        Click to discover what makes you special! ✨
+                                    </p>
                                 </div>
                             ) : (
                                 <motion.div
@@ -268,7 +293,7 @@ export default function ThankYou({ onLogout }) {
                             Fawad (Hypervisor)
                         </div>
 
-                        {showReasons && !showChat && !showGame && (
+                        {showReasons && !showChat && !showGame && !showTicTacToe && (
                             <div style={{ textAlign: 'center', marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <motion.button
                                     whileHover={{ scale: 1.1 }}
@@ -288,23 +313,138 @@ export default function ThankYou({ onLogout }) {
                                     Open the Eternal Scroll 📜
                                 </motion.button>
 
-                                <motion.button
-                                    whileHover={{ scale: 1.1 }}
-                                    onClick={() => setShowGame(true)}
+                                <motion.div
                                     style={{
-                                        background: '#ff6b81',
-                                        color: 'white',
-                                        padding: '12px 25px',
-                                        borderRadius: '50px',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        fontFamily: 'var(--font-fun)',
-                                        boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
-                                        width: 'fit-content'
+                                        width: '100%',
+                                        maxWidth: '400px',
+                                        padding: '20px',
+                                        background: 'linear-gradient(135deg, #ff6b81 0%, #ff8fa3 50%, #ffa5c0 100%)',
+                                        borderRadius: '20px',
+                                        border: '2px solid rgba(255,255,255,0.3)',
+                                        boxShadow: '0 15px 40px rgba(255, 107, 129, 0.3)',
+                                        textAlign: 'center',
+                                        position: 'relative',
+                                        overflow: 'hidden'
                                     }}
                                 >
-                                    Play Heart Catcher 🏹❤️
-                                </motion.button>
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '0',
+                                        left: '0',
+                                        right: '0',
+                                        bottom: '0',
+                                        background: 'rgba(255,255,255,0.2)',
+                                        zIndex: 1
+                                    }} />
+                                    <div style={{
+                                        position: 'relative',
+                                        zIndex: 2
+                                    }}>
+                                        <h3 style={{
+                                            color: '#ffffff',
+                                            fontFamily: 'var(--font-fun)',
+                                            fontSize: '1.4rem',
+                                            marginBottom: '15px',
+                                            textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                                        }}>
+                                            💕 Heart Catcher Ultimate 💕
+                                        </h3>
+                                        <p style={{
+                                            color: '#ffffff',
+                                            fontSize: '1rem',
+                                            marginBottom: '20px'
+                                        }}>
+                                            Catch magical hearts and advance through love-filled levels!
+                                        </p>
+                                        <motion.button
+                                            whileHover={{ scale: 1.05, rotate: 2 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => setShowGame(true)}
+                                            style={{
+                                                background: 'linear-gradient(45deg, #ff1744, #ff6b81)',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '12px 25px',
+                                                borderRadius: '50px',
+                                                fontSize: '0.9rem',
+                                                cursor: 'pointer',
+                                                boxShadow: '0 8px 25px rgba(255, 23, 68, 0.4)',
+                                                fontFamily: 'var(--font-fun)',
+                                                fontWeight: 'bold',
+                                                width: '100%',
+                                                marginBottom: '10px'
+                                            }}
+                                        >
+                                            💕 START HEART CATCHER
+                                        </motion.button>
+                                    </div>
+                                </motion.div>
+
+                                <motion.div
+                                    style={{
+                                        width: '100%',
+                                        maxWidth: '400px',
+                                        padding: '20px',
+                                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                        borderRadius: '20px',
+                                        border: '2px solid rgba(255,255,255,0.3)',
+                                        boxShadow: '0 15px 40px rgba(102, 126, 234, 0.3)',
+                                        textAlign: 'center',
+                                        position: 'relative',
+                                        overflow: 'hidden'
+                                    }}
+                                >
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '0',
+                                        left: '0',
+                                        right: '0',
+                                        bottom: '0',
+                                        background: 'rgba(255,255,255,0.2)',
+                                        zIndex: 1
+                                    }} />
+                                    <div style={{
+                                        position: 'relative',
+                                        zIndex: 2
+                                    }}>
+                                        <h3 style={{
+                                            color: '#ffffff',
+                                            fontFamily: 'var(--font-fun)',
+                                            fontSize: '1.4rem',
+                                            marginBottom: '15px',
+                                            textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                                        }}>
+                                            ⭕ Tic-Tac-Toe ❌
+                                        </h3>
+                                        <p style={{
+                                            color: '#ffffff',
+                                            fontSize: '1rem',
+                                            marginBottom: '20px'
+                                        }}>
+                                            Classic 2-player game! Challenge your friend locally!
+                                        </p>
+                                        <motion.button
+                                            whileHover={{ scale: 1.05, rotate: 2 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => setShowTicTacToe(true)}
+                                            style={{
+                                                background: 'linear-gradient(45deg, #667eea, #764ba2)',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '12px 25px',
+                                                borderRadius: '50px',
+                                                fontSize: '0.9rem',
+                                                cursor: 'pointer',
+                                                boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
+                                                fontFamily: 'var(--font-fun)',
+                                                fontWeight: 'bold',
+                                                width: '100%'
+                                            }}
+                                        >
+                                            ⭕ START TIC-TAC-TOE
+                                        </motion.button>
+                                    </div>
+                                </motion.div>
                             </div>
                         )}
                     </motion.div>
@@ -313,10 +453,24 @@ export default function ThankYou({ onLogout }) {
                         {showGame && (
                             <motion.div
                                 initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: window.innerWidth < 768 ? '300px' : '400px' }}
+                                animate={{ opacity: 1, height: '550px' }}
+                                exit={{ opacity: 0, height: 0 }}
                                 style={{ width: '100%', marginBottom: '20px' }}
                             >
                                 <ValentineGame onWin={() => { setShowGame(false); setShowChat(true); }} />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <AnimatePresence>
+                        {showTicTacToe && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: '500px' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                style={{ width: '100%', marginBottom: '20px' }}
+                            >
+                                <TicTacToeGame onWin={() => { setShowTicTacToe(false); setShowChat(true); }} />
                             </motion.div>
                         )}
                     </AnimatePresence>
