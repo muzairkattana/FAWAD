@@ -4,6 +4,7 @@ import confetti from 'canvas-confetti'
 import AntiqueChat from './AntiqueChat'
 import ValentineGame from './ValentineGame'
 import TicTacToeGame from './TicTacToeGame'
+import WebRTCTicTacToe from './WebRTCTicTacToe'
 
 export default function ThankYou({ onLogout }) {
     const [isOpen, setIsOpen] = useState(false)
@@ -21,6 +22,7 @@ export default function ThankYou({ onLogout }) {
     const [showChat, setShowChat] = useState(false)
     const [showGame, setShowGame] = useState(false)
     const [showTicTacToe, setShowTicTacToe] = useState(false)
+    const [showWebRTCTicTacToe, setShowWebRTCTicTacToe] = useState(false)
 
     const reasons = [
         "Your smile debugs my worst days ☀️",
@@ -293,7 +295,7 @@ export default function ThankYou({ onLogout }) {
                             Fawad (Hypervisor)
                         </div>
 
-                        {showReasons && !showChat && !showGame && !showTicTacToe && (
+                        {showReasons && !showChat && !showGame && !showTicTacToe && !showWebRTCTicTacToe && (
                             <div style={{ textAlign: 'center', marginTop: '40px', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
                                 <motion.button
                                     whileHover={{ scale: 1.1 }}
@@ -421,7 +423,7 @@ export default function ThankYou({ onLogout }) {
                                             fontSize: '1rem',
                                             marginBottom: '20px'
                                         }}>
-                                            Classic 2-player game! Challenge your friend locally!
+                                            Play locally with your friend on the same device!
                                         </p>
                                         <motion.button
                                             whileHover={{ scale: 1.05, rotate: 2 }}
@@ -438,10 +440,31 @@ export default function ThankYou({ onLogout }) {
                                                 boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
                                                 fontFamily: 'var(--font-fun)',
                                                 fontWeight: 'bold',
+                                                width: '100%',
+                                                marginBottom: '10px'
+                                            }}
+                                        >
+                                            ⭕ LOCAL TIC-TAC-TOE
+                                        </motion.button>
+                                        <motion.button
+                                            whileHover={{ scale: 1.05, rotate: 2 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => setShowWebRTCTicTacToe(true)}
+                                            style={{
+                                                background: 'linear-gradient(45deg, #f093fb, #f5576c)',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '12px 25px',
+                                                borderRadius: '50px',
+                                                fontSize: '0.9rem',
+                                                cursor: 'pointer',
+                                                boxShadow: '0 8px 25px rgba(240, 147, 251, 0.4)',
+                                                fontFamily: 'var(--font-fun)',
+                                                fontWeight: 'bold',
                                                 width: '100%'
                                             }}
                                         >
-                                            ⭕ START TIC-TAC-TOE
+                                            🌐 WEBRTC MULTIPLAYER
                                         </motion.button>
                                     </div>
                                 </motion.div>
@@ -471,6 +494,19 @@ export default function ThankYou({ onLogout }) {
                                 style={{ width: '100%', marginBottom: '20px' }}
                             >
                                 <TicTacToeGame onWin={() => { setShowTicTacToe(false); setShowChat(true); }} />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    <AnimatePresence>
+                        {showWebRTCTicTacToe && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: '600px' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                style={{ width: '100%', marginBottom: '20px' }}
+                            >
+                                <WebRTCTicTacToe onWin={() => { setShowWebRTCTicTacToe(false); setShowChat(true); }} />
                             </motion.div>
                         )}
                     </AnimatePresence>
