@@ -15,6 +15,14 @@ export default function AdminDashboard({ admin, onLogout }) {
 
     useEffect(() => {
         loadLogs()
+        // Load current credentials from localStorage to ensure they're up to date
+        const currentAppUsername = localStorage.getItem('app_username')
+        const currentAppPassword = localStorage.getItem('app_password')
+        const currentAdminEmail = localStorage.getItem('admin_email')
+        
+        if (currentAppUsername) setAppUsername(currentAppUsername)
+        if (currentAppPassword) setAppPassword(currentAppPassword)
+        if (currentAdminEmail) setAdminEmail(currentAdminEmail)
     }, [])
 
     const loadLogs = async () => {
@@ -34,6 +42,17 @@ export default function AdminDashboard({ admin, onLogout }) {
             const sessionToken = localStorage.getItem('adminSessionToken')
             await adminAuth.updateAppCredentials(sessionToken, appUsername, appPassword)
             setMessage('✅ App credentials updated successfully!')
+            
+            // Refresh the displayed credentials from localStorage
+            setTimeout(() => {
+                const currentAppUsername = localStorage.getItem('app_username')
+                const currentAppPassword = localStorage.getItem('app_password')
+                if (currentAppUsername) setAppUsername(currentAppUsername)
+                if (currentAppPassword) setAppPassword(currentAppPassword)
+            }, 100)
+            
+            // Refresh logs to show the update
+            await loadLogs()
         } catch (error) {
             setMessage('❌ Failed to update credentials')
         } finally {
@@ -54,6 +73,15 @@ export default function AdminDashboard({ admin, onLogout }) {
             setMessage('✅ Admin credentials updated successfully!')
             setAdminPassword('')
             setNewAdminPassword('')
+            
+            // Refresh the displayed admin email from localStorage
+            setTimeout(() => {
+                const currentAdminEmail = localStorage.getItem('admin_email')
+                if (currentAdminEmail) setAdminEmail(currentAdminEmail)
+            }, 100)
+            
+            // Refresh logs to show the update
+            await loadLogs()
         } catch (error) {
             setMessage('❌ Failed to update admin credentials')
         } finally {
@@ -175,6 +203,16 @@ export default function AdminDashboard({ admin, onLogout }) {
                             <h2 style={{ color: '#4a5568', marginBottom: '20px' }}>
                                 🎮 Application Login Credentials
                             </h2>
+                            <div style={{ 
+                                background: '#e6fffa', 
+                                padding: '10px', 
+                                borderRadius: '8px', 
+                                marginBottom: '15px',
+                                fontSize: '0.9rem',
+                                color: '#234e52'
+                            }}>
+                                💡 <strong>Current values:</strong> Username: "{localStorage.getItem('app_username') || 'hypervisor'}", Password: "{localStorage.getItem('app_password') || 'fawad'}"
+                            </div>
                             <div style={{ display: 'grid', gap: '15px' }}>
                                 <div>
                                     <label style={{ display: 'block', color: '#4a5568', marginBottom: '5px' }}>
@@ -242,6 +280,16 @@ export default function AdminDashboard({ admin, onLogout }) {
                             <h2 style={{ color: '#4a5568', marginBottom: '20px' }}>
                                 🔐 Admin Account Settings
                             </h2>
+                            <div style={{ 
+                                background: '#fef5e7', 
+                                padding: '10px', 
+                                borderRadius: '8px', 
+                                marginBottom: '15px',
+                                fontSize: '0.9rem',
+                                color: '#7e5109'
+                            }}>
+                                🔑 <strong>Current admin email:</strong> "{localStorage.getItem('admin_email') || 'admin@valentine.app'}"
+                            </div>
                             <div style={{ display: 'grid', gap: '15px' }}>
                                 <div>
                                     <label style={{ display: 'block', color: '#4a5568', marginBottom: '5px' }}>
