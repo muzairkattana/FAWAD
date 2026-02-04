@@ -10,6 +10,13 @@ import CursorTrail from './components/CursorTrail'
 import AdminApp from './components/AdminApp'
 import './styles/global.css'
 
+// Import simple sound manager (won't break if file missing)
+try {
+    import('./utils/simpleSound')
+} catch (error) {
+    console.log('Sound manager not loaded - app will work without sounds')
+}
+
 function App() {
     const [page, setPage] = useState('login')
     const [isAdmin, setIsAdmin] = useState(false)

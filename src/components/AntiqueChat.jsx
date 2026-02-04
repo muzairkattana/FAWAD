@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabaseFetch, checkSupabaseConfig } from '../lib/supabase'
+import MemberTracker from './MemberTracker'
 
 export default function AntiqueChat() {
     const [messages, setMessages] = useState([])
@@ -140,6 +141,29 @@ export default function AntiqueChat() {
 
         try {
             await supabaseFetch.sendMessage(chatName, newMessage)
+            
+            // Update member message count in localStorage
+            const members = JSON.parse(localStorage.getItem('chat_members') || '[]')
+            const updatedMembers = members.map(member => 
+                member.name === chatName 
+                    ? { ...member, messageCount: (member.messageCount || 0) + 1, lastSeen: new Date() }
+                    : member
+            )
+            
+            // If current member not in list, add them with message count
+            if (!updatedMembers.find(m => m.name === chatName)) {
+                updatedMembers.push({
+                    name: chatName,
+                    isOnline: true,
+                    lastSeen: new Date(),
+                    joinedAt: new Date(),
+                    messageCount: 1,
+                    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${chatName}`
+                })
+            }
+            
+            localStorage.setItem('chat_members', JSON.stringify(updatedMembers))
+            
             fetchMessages()
         } catch (err) {
             console.error(err)
@@ -349,7 +373,8 @@ export default function AntiqueChat() {
                         <span style={{ fontSize: '0.7rem', color: '#d32f2f', fontWeight: 'bold' }}>📡 Offline - Saved to Quill</span>
                     )}
                 </div>
-                <div style={{ display: 'flex', gap: '15px' }}>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    <MemberTracker currentMember={chatName} />
                     <label
                         title="Unseal (Import) shared scroll"
                         style={{

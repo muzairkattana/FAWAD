@@ -55,7 +55,10 @@ export default function Decision({ onYes, onNo }) {
                 backdropFilter: 'blur(10px)',
                 border: '2px solid rgba(255, 107, 129, 0.2)',
                 position: 'relative',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                margin: window.innerWidth < 480 ? '0 auto' : 'auto', // Center on mobile
+                left: window.innerWidth < 480 ? '50%' : 'auto', // Center on mobile
+                transform: window.innerWidth < 480 ? 'translateX(-50%)' : 'none' // Center on mobile
             }}
         >
             {/* Decorative corners */}
