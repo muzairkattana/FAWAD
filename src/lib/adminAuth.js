@@ -4,8 +4,8 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://your-project.s
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "your-anon-key"
 
 // Check if we have real Supabase credentials
-const hasRealSupabaseCredentials = supabaseUrl !== "https://your-project.supabase.co" && 
-                                   supabaseAnonKey !== "your-anon-key"
+const hasRealSupabaseCredentials = supabaseUrl !== "https://your-project.supabase.co" &&
+    supabaseAnonKey !== "your-anon-key"
 
 export const supabase = hasRealSupabaseCredentials ? createClient(supabaseUrl, supabaseAnonKey) : null
 
@@ -13,22 +13,26 @@ export const supabase = hasRealSupabaseCredentials ? createClient(supabaseUrl, s
 export const adminAuth = {
     // Login admin user
     async login(email, password) {
-        // Fallback to default credentials if no Supabase
-        if (!hasRealSupabaseCredentials) {
-            if (email === 'admin@valentine.app' && password === 'Admin@123') {
-                return {
-                    admin: {
-                        id: 'default-admin-id',
-                        email: 'admin@valentine.app',
-                        app_username: 'hypervisor',
-                        app_password: 'fawad'
-                    },
-                    sessionToken: 'default-session-token',
-                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
-                }
-            } else {
-                throw new Error('Invalid credentials')
+        // Check localStorage first for custom admin credentials
+        const localAdminEmail = localStorage.getItem('admin_email') || 'admin@valentine.app'
+        const localAdminPass = localStorage.getItem('admin_password_hash') || btoa('Admin@123' + 'salt')
+
+        if (email === localAdminEmail && btoa(password + 'salt') === localAdminPass) {
+            return {
+                admin: {
+                    id: 'default-admin-id',
+                    email: localAdminEmail,
+                    app_username: localStorage.getItem('app_username') || 'hypervisor',
+                    app_password: localStorage.getItem('app_password') || 'fawad'
+                },
+                sessionToken: 'default-session-token',
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
             }
+        }
+
+        // Fallback to real Supabase if available
+        if (!hasRealSupabaseCredentials) {
+            throw new Error('Invalid credentials')
         }
 
         try {
@@ -46,7 +50,7 @@ export const adminAuth = {
 
             // Verify password (in production, you'd use bcrypt.compare)
             const isValidPassword = await this.verifyPassword(password, admin.password_hash)
-            
+
             if (!isValidPassword) {
                 throw new Error('Invalid credentials')
             }
@@ -131,9 +135,9 @@ export const adminAuth = {
                 return {
                     admin: {
                         id: 'default-admin-id',
-                        email: 'admin@valentine.app',
-                        app_username: 'hypervisor',
-                        app_password: 'fawad',
+                        email: localStorage.getItem('admin_email') || 'admin@valentine.app',
+                        app_username: localStorage.getItem('app_username') || 'hypervisor',
+                        app_password: localStorage.getItem('app_password') || 'fawad',
                         is_active: true
                     },
                     sessionToken
@@ -178,15 +182,19 @@ export const adminAuth = {
 
     // Update app credentials
     async updateAppCredentials(sessionToken, appUsername, appPassword) {
-        // Fallback for no Supabase - just return success
+        // Always save to localStorage as a primary or fallback
+        localStorage.setItem('app_username', appUsername)
+        localStorage.setItem('app_password', appPassword)
+
+        // Fallback for no Supabase
         if (!hasRealSupabaseCredentials) {
-            console.log('App credentials updated (fallback mode):', { appUsername, appPassword })
+            console.log('App credentials updated (localStorage):', { appUsername, appPassword })
             return { app_username: appUsername, app_password: appPassword }
         }
 
         try {
             const session = await this.verifySession(sessionToken)
-            
+
             const { data, error } = await supabase
                 .from('admin_users')
                 .update({
@@ -201,7 +209,7 @@ export const adminAuth = {
                 throw new Error('Failed to update credentials')
             }
 
-            await this.logAction(session.admin.id, 'UPDATE_CREDENTIALS', 
+            await this.logAction(session.admin.id, 'UPDATE_CREDENTIALS',
                 `Updated app credentials - Username: ${appUsername}`, null, navigator.userAgent)
 
             return data
@@ -214,15 +222,19 @@ export const adminAuth = {
 
     // Update admin email and password
     async updateAdminCredentials(sessionToken, newEmail, newPassword) {
+        // Save to localStorage for demo persistence
+        if (newEmail) localStorage.setItem('admin_email', newEmail)
+        if (newPassword) localStorage.setItem('admin_password_hash', btoa(newPassword + 'salt'))
+
         // Fallback for no Supabase
         if (!hasRealSupabaseCredentials) {
-            console.log('Admin credentials updated (fallback mode):', { newEmail })
+            console.log('Admin credentials updated (localStorage):', { newEmail })
             return { email: newEmail }
         }
 
         try {
             const session = await this.verifySession(sessionToken)
-            
+
             const updates = {}
             if (newEmail) updates.email = newEmail
             if (newPassword) updates.password_hash = await this.hashPassword(newPassword)
@@ -238,7 +250,7 @@ export const adminAuth = {
                 throw new Error('Failed to update admin credentials')
             }
 
-            await this.logAction(session.admin.id, 'UPDATE_ADMIN_CREDENTIALS', 
+            await this.logAction(session.admin.id, 'UPDATE_ADMIN_CREDENTIALS',
                 'Updated admin email/password', null, navigator.userAgent)
 
             return data
@@ -265,7 +277,7 @@ export const adminAuth = {
 
         try {
             const session = await this.verifySession(sessionToken)
-            
+
             const { data, error } = await supabase
                 .from('admin_logs')
                 .select('*')
@@ -287,7 +299,7 @@ export const adminAuth = {
 
     // Helper functions
     generateSessionToken() {
-        return Array.from({ length: 32 }, () => 
+        return Array.from({ length: 32 }, () =>
             Math.random().toString(36).charAt(2)
         ).join('')
     },
@@ -330,6 +342,17 @@ export const adminAuth = {
 export const appAuth = {
     async checkCredentials(username, password) {
         try {
+            // Check localStorage first (local override)
+            const localUser = localStorage.getItem('app_username')
+            const localPass = localStorage.getItem('app_password')
+
+            if (localUser && localPass) {
+                if (username === localUser && password === localPass) {
+                    return true
+                }
+                // If local exists but doesn't match, we still try Supabase if available
+            }
+
             // If we have real Supabase credentials, use them
             if (hasRealSupabaseCredentials && supabase) {
                 const { data, error } = await supabase
@@ -344,12 +367,11 @@ export const appAuth = {
                 }
             }
 
-            // Fallback to default credentials
+            // Global fallback to default credentials if nothing else matches
             return username.toLowerCase() === 'hypervisor' && password.toLowerCase() === 'fawad'
 
         } catch (error) {
             console.error('Credential check error:', error)
-            // Fallback to default credentials
             return username.toLowerCase() === 'hypervisor' && password.toLowerCase() === 'fawad'
         }
     }

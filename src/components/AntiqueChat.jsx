@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabaseFetch } from '../lib/supabase'
+import { supabaseFetch, checkSupabaseConfig } from '../lib/supabase'
 
 export default function AntiqueChat() {
     const [messages, setMessages] = useState([])
@@ -10,11 +10,30 @@ export default function AntiqueChat() {
     const [showRegistry, setShowRegistry] = useState(true)
     const [isOnline, setIsOnline] = useState(navigator.onLine)
     const [hiddenMessages, setHiddenMessages] = useState([])
+    const [connectionStatus, setConnectionStatus] = useState('checking')
     const chatEndRef = useRef(null)
+    const subscriptionRef = useRef(null)
+
+    // Check Supabase configuration on mount
+    useEffect(() => {
+        const config = checkSupabaseConfig()
+        console.log('Chat initialization with config:', config)
+        
+        if (config.hasRealCredentials) {
+            setConnectionStatus('connected')
+        } else {
+            setConnectionStatus('offline')
+        }
+    }, [])
 
     // Detect connectivity
     useEffect(() => {
-        const handleStatusChange = () => setIsOnline(navigator.onLine)
+        const handleStatusChange = () => {
+            setIsOnline(navigator.onLine)
+            if (navigator.onLine) {
+                fetchMessages()
+            }
+        }
         window.addEventListener('online', handleStatusChange)
         window.addEventListener('offline', handleStatusChange)
         return () => {
@@ -40,14 +59,40 @@ export default function AntiqueChat() {
         if (savedHidden) {
             setHiddenMessages(JSON.parse(savedHidden))
         }
-        fetchMessages()
 
-        // Polling as a fallback for Realtime since we aren't using the full SDK
-        const interval = setInterval(() => {
-            if (navigator.onLine) fetchMessages()
-        }, 3000)
-        return () => clearInterval(interval)
+        fetchMessages()
+        setupRealtimeSubscription()
+
+        return () => {
+            if (subscriptionRef.current) {
+                subscriptionRef.current.unsubscribe()
+            }
+        }
     }, [])
+
+    // Setup real-time subscription
+    const setupRealtimeSubscription = () => {
+        if (supabaseFetch.checkConnection()) {
+            console.log('Setting up real-time subscription...')
+            subscriptionRef.current = supabaseFetch.subscribeToMessages((newMessage) => {
+                setMessages(prev => {
+                    // Avoid duplicate messages
+                    if (prev.some(msg => msg.id === newMessage.id)) {
+                        return prev
+                    }
+                    return [...prev, newMessage]
+                })
+            })
+        } else {
+            console.log('Using polling fallback for real-time updates')
+            // Fallback polling
+            const interval = setInterval(() => {
+                if (navigator.onLine) fetchMessages()
+            }, 5000)
+            
+            return () => clearInterval(interval)
+        }
+    }
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -207,6 +252,16 @@ export default function AntiqueChat() {
                 fontFamily: 'var(--font-typewriter)'
             }}
         >
+            <style>
+                {`
+                    .ink-text:hover .msg-actions {
+                        opacity: 1 !important;
+                    }
+                    .ink-text {
+                        transition: all 0.2s ease;
+                    }
+                `}
+            </style>
             <AnimatePresence>
                 {showRegistry && (
                     <motion.div
@@ -422,59 +477,70 @@ export default function AntiqueChat() {
                                 {msg.sender === chatName && (
                                     <div style={{
                                         position: 'absolute',
-                                        top: '0',
-                                        right: msg.sender === chatName ? '-55px' : 'auto',
-                                        left: msg.sender === chatName ? 'auto' : '-55px',
+                                        top: '-20px',
+                                        right: '0',
                                         display: 'flex',
-                                        gap: '5px'
+                                        gap: '8px',
+                                        opacity: 0,
+                                        transition: 'opacity 0.2s ease',
+                                        padding: '5px'
                                     }} className="msg-actions">
                                         <button
                                             onClick={() => handleDeleteForAll(msg.id)}
                                             title="Delete for everyone"
                                             style={{
-                                                background: 'transparent',
-                                                border: 'none',
-                                                fontSize: '14px',
+                                                background: 'rgba(211, 47, 47, 0.1)',
+                                                border: '1px solid rgba(211, 47, 47, 0.2)',
+                                                borderRadius: '4px',
+                                                fontSize: '12px',
                                                 color: '#d32f2f',
-                                                cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                padding: '2px 5px'
                                             }}
                                         >
-                                            🗑️🌎
+                                            🗑️ All
                                         </button>
                                         <button
                                             onClick={() => handleDeleteForMe(msg.id)}
                                             title="Delete for me"
                                             style={{
-                                                background: 'transparent',
-                                                border: 'none',
-                                                fontSize: '14px',
+                                                background: 'rgba(121, 85, 72, 0.1)',
+                                                border: '1px solid rgba(121, 85, 72, 0.2)',
+                                                borderRadius: '4px',
+                                                fontSize: '12px',
                                                 color: '#795548',
-                                                cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                padding: '2px 5px'
                                             }}
                                         >
-                                            ❌
+                                            ❌ Me
                                         </button>
                                     </div>
                                 )}
                                 {msg.sender !== chatName && (
                                     <div style={{
                                         position: 'absolute',
-                                        top: '0',
-                                        left: '-30px',
-                                        display: 'flex'
+                                        top: '-20px',
+                                        left: '0',
+                                        display: 'flex',
+                                        opacity: 0,
+                                        transition: 'opacity 0.2s ease',
+                                        padding: '5px'
                                     }} className="msg-actions">
                                         <button
                                             onClick={() => handleDeleteForMe(msg.id)}
                                             title="Delete for me"
                                             style={{
-                                                background: 'transparent',
-                                                border: 'none',
-                                                fontSize: '14px',
+                                                background: 'rgba(121, 85, 72, 0.1)',
+                                                border: '1px solid rgba(121, 85, 72, 0.2)',
+                                                borderRadius: '4px',
+                                                fontSize: '12px',
                                                 color: '#795548',
-                                                cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                padding: '2px 5px'
                                             }}
                                         >
-                                            ❌
+                                            ❌ Clear
                                         </button>
                                     </div>
                                 )}

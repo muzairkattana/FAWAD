@@ -7,14 +7,23 @@ export default function Login({ onLogin }) {
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [shake, setShake] = useState(0)
+    const [loading, setLoading] = useState(false)
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault()
-        if (username.toLowerCase() === 'hypervisor' && password.toLowerCase() === 'fawad') {
-            onLogin()
-        } else {
-            setError(username.toLowerCase() !== 'hypervisor' ? "Oops! You’re not Ayesha 😜" : "Wrong password… nice try hacker 😂")
-            setShake(prev => prev + 1)
+        setLoading(true)
+        try {
+            const isValid = await appAuth.checkCredentials(username, password)
+            if (isValid) {
+                onLogin()
+            } else {
+                setError(username.toLowerCase() !== 'hypervisor' ? "Oops! You’re not Ayesha 😜" : "Wrong password… nice try hacker 😂")
+                setShake(prev => prev + 1)
+            }
+        } catch (err) {
+            setError("Something went wrong. Try again!")
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -115,26 +124,28 @@ export default function Login({ onLogin }) {
                         />
                     </div>
                     <motion.button
-                        whileHover={{ scale: 1.05, boxShadow: '0 8px 25px rgba(255, 107, 129, 0.4)' }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={!loading ? { scale: 1.05, boxShadow: '0 8px 25px rgba(255, 107, 129, 0.4)' } : {}}
+                        whileTap={!loading ? { scale: 0.95 } : {}}
                         type="submit"
+                        disabled={loading}
                         style={{
                             padding: '15px',
                             borderRadius: '15px',
                             border: 'none',
-                            background: 'var(--primary)',
+                            background: loading ? '#ccc' : 'var(--primary)',
                             color: 'white',
                             fontWeight: 'bold',
                             fontSize: '1.2rem',
                             marginTop: '10px',
-                            cursor: 'pointer',
+                            cursor: loading ? 'not-allowed' : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '10px'
+                            gap: '10px',
+                            opacity: loading ? 0.7 : 1
                         }}
                     >
-                        Enter 🌸
+                        {loading ? 'Entering... ✨' : 'Enter 🌸'}
                     </motion.button>
                 </form>
 
