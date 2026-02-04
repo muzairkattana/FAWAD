@@ -7,6 +7,20 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "your-anon-key
 const hasRealSupabaseCredentials = supabaseUrl !== "https://your-project.supabase.co" &&
     supabaseAnonKey !== "your-anon-key"
 
+// Diagnostic function to check configuration
+export const checkSupabaseConfig = () => {
+    const config = {
+        supabaseUrl,
+        supabaseAnonKey,
+        hasRealCredentials: hasRealSupabaseCredentials,
+        supabaseClient: supabase ? 'created' : 'null',
+        environment: import.meta.env.MODE
+    }
+    
+    console.log('🔍 Supabase Configuration:', config)
+    return config
+}
+
 export const supabase = hasRealSupabaseCredentials ? createClient(supabaseUrl, supabaseAnonKey) : null
 
 // Admin authentication functions
@@ -193,13 +207,16 @@ export const adminAuth = {
         await this.logAction('default-admin-id', 'UPDATE_CREDENTIALS', 
             `Updated app credentials - Username: ${appUsername}`, null, navigator.userAgent)
 
-        // Fallback for no Supabase - return success immediately
-        if (!hasRealSupabaseCredentials) {
-            console.log('✅ App credentials updated (localStorage):', { appUsername, appPassword })
+        // Check if we should try Supabase
+        const shouldTrySupabase = hasRealSupabaseCredentials && supabase
+        
+        if (!shouldTrySupabase) {
+            console.log('✅ App credentials updated (localStorage only - no Supabase config):', { appUsername, appPassword })
             return { app_username: appUsername, app_password: appPassword }
         }
 
         try {
+            console.log('🔄 Attempting to update credentials in Supabase...')
             const session = await this.verifySession(sessionToken)
 
             const { data, error } = await supabase
@@ -213,18 +230,19 @@ export const adminAuth = {
                 .single()
 
             if (error) {
-                throw new Error('Failed to update credentials')
+                console.error('❌ Supabase update failed:', error)
+                throw new Error(`Database update failed: ${error.message}`)
             }
 
+            console.log('✅ Credentials updated in Supabase successfully:', data)
             await this.logAction(session.admin.id, 'UPDATE_CREDENTIALS',
                 `Updated app credentials - Username: ${appUsername}`, null, navigator.userAgent)
 
             return data
 
         } catch (error) {
-            console.error('Update credentials error:', error)
-            // Don't throw error in production - localStorage update already succeeded
-            console.log('⚠️ Supabase update failed, but localStorage update succeeded')
+            console.error('❌ Update credentials error:', error)
+            console.log('⚠️ Falling back to localStorage only - credentials saved locally but not in database')
             return { app_username: appUsername, app_password: appPassword }
         }
     },
@@ -239,13 +257,16 @@ export const adminAuth = {
         await this.logAction('default-admin-id', 'UPDATE_ADMIN_CREDENTIALS', 
             `Updated admin credentials - Email: ${newEmail}`, null, navigator.userAgent)
 
-        // Fallback for no Supabase - return success immediately
-        if (!hasRealSupabaseCredentials) {
-            console.log('✅ Admin credentials updated (localStorage):', { newEmail })
+        // Check if we should try Supabase
+        const shouldTrySupabase = hasRealSupabaseCredentials && supabase
+        
+        if (!shouldTrySupabase) {
+            console.log('✅ Admin credentials updated (localStorage only - no Supabase config):', { newEmail })
             return { email: newEmail }
         }
 
         try {
+            console.log('🔄 Attempting to update admin credentials in Supabase...')
             const session = await this.verifySession(sessionToken)
 
             const updates = {}
@@ -260,18 +281,19 @@ export const adminAuth = {
                 .single()
 
             if (error) {
-                throw new Error('Failed to update admin credentials')
+                console.error('❌ Supabase admin update failed:', error)
+                throw new Error(`Database update failed: ${error.message}`)
             }
 
+            console.log('✅ Admin credentials updated in Supabase successfully:', data)
             await this.logAction(session.admin.id, 'UPDATE_ADMIN_CREDENTIALS',
                 'Updated admin email/password', null, navigator.userAgent)
 
             return data
 
         } catch (error) {
-            console.error('Update admin credentials error:', error)
-            // Don't throw error in production - localStorage update already succeeded
-            console.log('⚠️ Supabase update failed, but localStorage update succeeded')
+            console.error('❌ Update admin credentials error:', error)
+            console.log('⚠️ Falling back to localStorage only - admin credentials saved locally but not in database')
             return { email: newEmail }
         }
     },

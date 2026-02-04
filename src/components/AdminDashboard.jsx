@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { adminAuth } from '../lib/adminAuth'
+import { adminAuth, checkSupabaseConfig } from '../lib/adminAuth'
 
 export default function AdminDashboard({ admin, onLogout }) {
     const [appUsername, setAppUsername] = useState(admin.app_username)
@@ -15,6 +15,9 @@ export default function AdminDashboard({ admin, onLogout }) {
 
     useEffect(() => {
         loadLogs()
+        // Check Supabase configuration and show diagnostic info
+        const config = checkSupabaseConfig()
+        
         // Load current credentials from localStorage to ensure they're up to date
         const currentAppUsername = localStorage.getItem('app_username')
         const currentAppPassword = localStorage.getItem('app_password')
@@ -23,6 +26,14 @@ export default function AdminDashboard({ admin, onLogout }) {
         if (currentAppUsername) setAppUsername(currentAppUsername)
         if (currentAppPassword) setAppPassword(currentAppPassword)
         if (currentAdminEmail) setAdminEmail(currentAdminEmail)
+        
+        // Show configuration status in console
+        if (!config.hasRealCredentials) {
+            console.warn('⚠️ Admin system running in localStorage-only mode')
+            console.warn('📝 To enable database persistence, set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables')
+        } else {
+            console.log('✅ Admin system configured with Supabase database')
+        }
     }, [])
 
     const loadLogs = async () => {
@@ -127,13 +138,26 @@ export default function AdminDashboard({ admin, onLogout }) {
                         alignItems: 'center',
                         marginBottom: '20px'
                     }}>
-                        <h1 style={{
-                            color: '#4a5568',
-                            fontSize: '2rem',
-                            margin: 0
-                        }}>
-                            🛡️ Admin Dashboard
-                        </h1>
+                        <div>
+                            <h1 style={{
+                                color: '#4a5568',
+                                fontSize: '2rem',
+                                margin: 0
+                            }}>
+                                🛡️ Admin Dashboard
+                            </h1>
+                            <div style={{
+                                fontSize: '0.9rem',
+                                marginTop: '5px',
+                                color: checkSupabaseConfig().hasRealCredentials ? '#22543d' : '#742a2a',
+                                background: checkSupabaseConfig().hasRealCredentials ? '#c6f6d5' : '#fed7d7',
+                                padding: '5px 10px',
+                                borderRadius: '5px',
+                                display: 'inline-block'
+                            }}>
+                                {checkSupabaseConfig().hasRealCredentials ? '🟢 Database Connected' : '🟡 Local Storage Only'}
+                            </div>
+                        </div>
                         <button
                             onClick={handleLogout}
                             style={{
