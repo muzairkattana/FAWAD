@@ -18,6 +18,9 @@ export const adminAuth = {
         const localAdminPass = localStorage.getItem('admin_password_hash') || btoa('Admin@123' + 'salt')
 
         if (email === localAdminEmail && btoa(password + 'salt') === localAdminPass) {
+            // Log the login action to localStorage
+            await this.logAction('default-admin-id', 'LOGIN', 'Admin logged in (localStorage mode)', null, navigator.userAgent)
+            
             return {
                 admin: {
                     id: 'default-admin-id',
@@ -263,6 +266,17 @@ export const adminAuth = {
 
     // Get admin logs
     async getAdminLogs(sessionToken, limit = 50) {
+        // Always try localStorage first
+        try {
+            const localLogs = JSON.parse(localStorage.getItem('admin_logs_fallback') || '[]')
+            if (localLogs.length > 0) {
+                console.log('📋 Loading logs from localStorage:', localLogs.length)
+                return localLogs.slice(0, limit)
+            }
+        } catch (error) {
+            console.error('Failed to load logs from localStorage:', error)
+        }
+
         // Fallback for no Supabase
         if (!hasRealSupabaseCredentials) {
             return [
@@ -286,14 +300,20 @@ export const adminAuth = {
                 .limit(limit)
 
             if (error) {
-                throw new Error('Failed to fetch logs')
+                console.error('Failed to fetch logs from Supabase:', error)
+                // Return localStorage logs as fallback
+                const localLogs = JSON.parse(localStorage.getItem('admin_logs_fallback') || '[]')
+                return localLogs.slice(0, limit)
             }
 
+            console.log('📋 Loaded logs from Supabase:', data.length)
             return data
 
         } catch (error) {
-            console.error('Get logs error:', error)
-            throw error
+            console.error('Failed to load logs:', error)
+            // Return localStorage logs as fallback
+            const localLogs = JSON.parse(localStorage.getItem('admin_logs_fallback') || '[]')
+            return localLogs.slice(0, limit)
         }
     },
 
@@ -317,13 +337,31 @@ export const adminAuth = {
     },
 
     async logAction(adminId, action, details, ipAddress, userAgent) {
+        // Always log to localStorage as fallback
+        try {
+            const existingLogs = JSON.parse(localStorage.getItem('admin_logs_fallback') || '[]')
+            const newLog = {
+                id: Date.now().toString(),
+                admin_id: adminId,
+                action,
+                details,
+                ip_address: ipAddress,
+                user_agent: userAgent,
+                created_at: new Date().toISOString()
+            }
+            existingLogs.unshift(newLog) // Add to beginning
+            localStorage.setItem('admin_logs_fallback', JSON.stringify(existingLogs.slice(0, 100))) // Keep last 100 logs
+            console.log('✅ Action logged to localStorage:', action)
+        } catch (error) {
+            console.error('Failed to log to localStorage:', error)
+        }
+
         if (!hasRealSupabaseCredentials) {
-            console.log('Log (fallback):', { adminId, action, details })
             return
         }
 
         try {
-            await supabase
+            const { error } = await supabase
                 .from('admin_logs')
                 .insert({
                     admin_id: adminId,
@@ -332,8 +370,14 @@ export const adminAuth = {
                     ip_address: ipAddress,
                     user_agent: userAgent
                 })
+
+            if (error) {
+                console.error('Failed to log to Supabase:', error)
+            } else {
+                console.log('✅ Action logged to Supabase:', action)
+            }
         } catch (error) {
-            console.error('Failed to log action:', error)
+            console.error('Failed to log action to Supabase:', error)
         }
     }
 }
