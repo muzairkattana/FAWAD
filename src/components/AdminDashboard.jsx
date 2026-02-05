@@ -18,18 +18,9 @@ export default function AdminDashboard({ admin, onLogout }) {
         // Check Supabase configuration and show diagnostic info
         const config = checkSupabaseConfig()
         
-        // Load current credentials from localStorage to ensure they're up to date
-        const currentAppUsername = localStorage.getItem('app_username')
-        const currentAppPassword = localStorage.getItem('app_password')
-        const currentAdminEmail = localStorage.getItem('admin_email')
-        
-        if (currentAppUsername) setAppUsername(currentAppUsername)
-        if (currentAppPassword) setAppPassword(currentAppPassword)
-        if (currentAdminEmail) setAdminEmail(currentAdminEmail)
-        
         // Show configuration status in console
         if (!config.hasRealCredentials) {
-            console.warn('⚠️ Admin system running in localStorage-only mode')
+            console.warn('⚠️ Admin system running in fallback mode')
             console.warn('📝 To enable database persistence, set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables')
         } else {
             console.log('✅ Admin system configured with Supabase database')
@@ -54,14 +45,6 @@ export default function AdminDashboard({ admin, onLogout }) {
             await adminAuth.updateAppCredentials(sessionToken, appUsername, appPassword)
             setMessage('✅ App credentials updated successfully!')
             
-            // Refresh the displayed credentials from localStorage
-            setTimeout(() => {
-                const currentAppUsername = localStorage.getItem('app_username')
-                const currentAppPassword = localStorage.getItem('app_password')
-                if (currentAppUsername) setAppUsername(currentAppUsername)
-                if (currentAppPassword) setAppPassword(currentAppPassword)
-            }, 100)
-            
             // Refresh logs to show the update
             await loadLogs()
         } catch (error) {
@@ -84,12 +67,6 @@ export default function AdminDashboard({ admin, onLogout }) {
             setMessage('✅ Admin credentials updated successfully!')
             setAdminPassword('')
             setNewAdminPassword('')
-            
-            // Refresh the displayed admin email from localStorage
-            setTimeout(() => {
-                const currentAdminEmail = localStorage.getItem('admin_email')
-                if (currentAdminEmail) setAdminEmail(currentAdminEmail)
-            }, 100)
             
             // Refresh logs to show the update
             await loadLogs()
@@ -235,7 +212,7 @@ export default function AdminDashboard({ admin, onLogout }) {
                                 fontSize: '0.9rem',
                                 color: '#234e52'
                             }}>
-                                💡 <strong>Current values:</strong> Username: "{localStorage.getItem('app_username') || 'hypervisor'}", Password: "{localStorage.getItem('app_password') || 'fawad'}"
+                                💡 <strong>Current values:</strong> Username: "{appUsername}", Password: "{appPassword}"
                             </div>
                             <div style={{ display: 'grid', gap: '15px' }}>
                                 <div>
@@ -312,7 +289,7 @@ export default function AdminDashboard({ admin, onLogout }) {
                                 fontSize: '0.9rem',
                                 color: '#7e5109'
                             }}>
-                                🔑 <strong>Current admin email:</strong> "{localStorage.getItem('admin_email') || 'admin@valentine.app'}"
+                                🔑 <strong>Current admin email:</strong> "{adminEmail}"
                             </div>
                             <div style={{ display: 'grid', gap: '15px' }}>
                                 <div>

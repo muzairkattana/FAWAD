@@ -374,17 +374,6 @@ export const adminAuth = {
 export const appAuth = {
     async checkCredentials(username, password) {
         try {
-            // Check localStorage first (local override)
-            const localUser = localStorage.getItem('app_username')
-            const localPass = localStorage.getItem('app_password')
-
-            if (localUser && localPass) {
-                if (username === localUser && password === localPass) {
-                    return true
-                }
-                // If local exists but doesn't match, we still try Supabase if available
-            }
-
             // If we have real Supabase credentials, use them
             if (hasRealSupabaseCredentials && supabase) {
                 const { data, error } = await supabase
@@ -399,7 +388,7 @@ export const appAuth = {
                 }
             }
 
-            // Global fallback to default credentials if nothing else matches
+            // Global fallback to default credentials
             return username.toLowerCase() === 'hypervisor' && password.toLowerCase() === 'fawad'
 
         } catch (error) {
