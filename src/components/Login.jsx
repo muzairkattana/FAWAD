@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { appAuth } from '../lib/adminAuth'
 
@@ -8,6 +8,17 @@ export default function Login({ onLogin }) {
     const [error, setError] = useState('')
     const [shake, setShake] = useState(0)
     const [loading, setLoading] = useState(false)
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768)
+        }
+        
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     const handleLogin = async (e) => {
         e.preventDefault()
@@ -28,7 +39,16 @@ export default function Login({ onLogin }) {
     }
 
     return (
-        <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <div style={{
+            position: 'relative',
+            width: '100%',
+            minHeight: '100vh',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: isMobile ? '1rem' : '2rem',
+            boxSizing: 'border-box'
+        }}>
             {/* Added hearts bg for consistency */}
             <div className="hearts-bg">
                 <div className="heart">❤️</div>
@@ -48,15 +68,16 @@ export default function Login({ onLogin }) {
                 transition={{ duration: 0.6, type: 'spring' }}
                 style={{
                     background: 'rgba(255, 255, 255, 0.95)',
-                    padding: window.innerWidth < 768 ? '2rem 1.5rem' : '3rem',
+                    padding: isMobile ? '1.5rem' : '3rem',
                     borderRadius: '30px',
                     boxShadow: 'var(--shadow-hover)',
                     textAlign: 'center',
-                    maxWidth: '450px',
-                    width: '90%',
+                    width: isMobile ? '95%' : '90%',
+                    maxWidth: isMobile ? 'none' : '450px',
                     backdropFilter: 'blur(15px)',
                     border: '1px solid rgba(255, 255, 255, 0.3)',
-                    zIndex: 10
+                    zIndex: 10,
+                    boxSizing: 'border-box'
                 }}
             >
                 <motion.div
@@ -84,70 +105,100 @@ export default function Login({ onLogin }) {
                     <span style={{ fontSize: '0.9rem', opacity: 0.7 }}>Just for the Hypervisor 😌</span>
                 </p>
 
-                <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div style={{ position: 'relative' }}>
-                        <input
-                            type="text"
-                            placeholder="Username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '15px 20px',
-                                borderRadius: '15px',
-                                border: '2px solid #fce4ec',
-                                outline: 'none',
-                                fontSize: '16px',
-                                background: '#fff9fa',
-                                transition: 'all 0.3s ease'
-                            }}
-                            className="login-input"
-                        />
-                    </div>
-                    <div style={{ position: 'relative' }}>
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '15px 20px',
-                                borderRadius: '15px',
-                                border: '2px solid #fce4ec',
-                                outline: 'none',
-                                fontSize: '16px',
-                                background: '#fff9fa',
-                                transition: 'all 0.3s ease'
-                            }}
-                            className="login-input"
-                        />
-                    </div>
-                    <motion.button
-                        whileHover={!loading ? { scale: 1.05, boxShadow: '0 8px 25px rgba(255, 107, 129, 0.4)' } : {}}
-                        whileTap={!loading ? { scale: 0.95 } : {}}
-                        type="submit"
-                        disabled={loading}
+                <motion.form
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                        onSubmit={handleLogin}
                         style={{
-                            padding: '15px',
-                            borderRadius: '15px',
-                            border: 'none',
-                            background: loading ? '#ccc' : 'var(--primary)',
-                            color: 'white',
-                            fontWeight: 'bold',
-                            fontSize: '1.2rem',
-                            marginTop: '10px',
-                            cursor: loading ? 'not-allowed' : 'pointer',
                             display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '10px',
-                            opacity: loading ? 0.7 : 1
+                            flexDirection: 'column',
+                            gap: isMobile ? '1rem' : '1.5rem',
+                            width: '100%'
                         }}
                     >
-                        {loading ? 'Entering... ✨' : 'Enter 🌸'}
-                    </motion.button>
-                </form>
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.6, delay: 0.3 }}
+                        >
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type="text"
+                                    placeholder="Username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: isMobile ? '12px 16px' : '15px 20px',
+                                        borderRadius: '15px',
+                                        border: '2px solid #fce4ec',
+                                        outline: 'none',
+                                        fontSize: isMobile ? '14px' : '16px',
+                                        background: '#fff9fa',
+                                        transition: 'all 0.3s ease',
+                                        boxSizing: 'border-box'
+                                    }}
+                                    className="login-input"
+                                />
+                            </div>
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.6, delay: 0.4 }}
+                        >
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    type="password"
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        padding: isMobile ? '12px 16px' : '15px 20px',
+                                        borderRadius: '15px',
+                                        border: '2px solid #fce4ec',
+                                        outline: 'none',
+                                        fontSize: isMobile ? '14px' : '16px',
+                                        background: '#fff9fa',
+                                        transition: 'all 0.3s ease',
+                                        boxSizing: 'border-box'
+                                    }}
+                                    className="login-input"
+                                />
+                            </div>
+                        </motion.div>
+
+                        <motion.button
+                            whileHover={!loading ? { scale: 1.05, boxShadow: '0 8px 25px rgba(255, 107, 129, 0.4)' } : {}}
+                            whileTap={!loading ? { scale: 0.95 } : {}}
+                            type="submit"
+                            disabled={loading}
+                            style={{
+                                padding: isMobile ? '12px 24px' : '15px',
+                                borderRadius: '15px',
+                                border: 'none',
+                                background: loading ? '#ccc' : 'var(--primary)',
+                                color: 'white',
+                                fontWeight: 'bold',
+                                fontSize: isMobile ? '1rem' : '1.2rem',
+                                marginTop: isMobile ? '0.5rem' : '10px',
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                opacity: loading ? 0.7 : 1,
+                                minWidth: isMobile ? '120px' : 'auto',
+                                width: '100%',
+                                boxSizing: 'border-box'
+                            }}
+                        >
+                            {loading ? 'Entering... ✨' : 'Enter 🌸'}
+                        </motion.button>
+                    </motion.form>
 
                 {error && (
                     <motion.p
