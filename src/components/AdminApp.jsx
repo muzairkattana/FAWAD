@@ -1,35 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import AdminLogin from './AdminLogin'
 import AdminDashboard from './AdminDashboard'
 import AdminRoute from './AdminRoute'
 
 export default function AdminApp() {
     const [admin, setAdmin] = useState(null)
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        checkExistingSession()
-    }, [])
-
-    const checkExistingSession = async () => {
-        try {
-            const sessionToken = localStorage.getItem('adminSessionToken')
-            const sessionExpiry = localStorage.getItem('adminSessionExpiry')
-            
-            if (sessionToken && sessionExpiry && new Date(sessionExpiry) > new Date()) {
-                // Verify session is still valid
-                const { adminAuth } = await import('../lib/adminAuth')
-                const session = await adminAuth.verifySession(sessionToken)
-                setAdmin(session.admin)
-            }
-        } catch (error) {
-            console.error('Session check failed:', error)
-            localStorage.removeItem('adminSessionToken')
-            localStorage.removeItem('adminSessionExpiry')
-        } finally {
-            setLoading(false)
-        }
-    }
+    const [loading, setLoading] = useState(false) // Set to false since we're not auto-checking
 
     const handleLogin = (adminData) => {
         setAdmin(adminData)

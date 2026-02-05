@@ -17,9 +17,8 @@ export default function AdminLogin({ onLogin }) {
         try {
             const result = await adminAuth.login(email, password)
             
-            // Store session token
-            localStorage.setItem('adminSessionToken', result.sessionToken)
-            localStorage.setItem('adminSessionExpiry', result.expiresAt)
+            // Note: Session management should use database or secure storage
+            // localStorage removed as requested
             
             onLogin(result.admin)
         } catch (error) {

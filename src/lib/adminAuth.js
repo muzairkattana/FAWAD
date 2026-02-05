@@ -27,29 +27,9 @@ export const supabase = hasRealSupabaseCredentials ? createClient(supabaseUrl, s
 export const adminAuth = {
     // Login admin user
     async login(email, password) {
-        // Check localStorage first for custom admin credentials
-        const localAdminEmail = localStorage.getItem('admin_email') || 'admin@valentine.app'
-        const localAdminPass = localStorage.getItem('admin_password_hash') || btoa('Admin@123' + 'salt')
-
-        if (email === localAdminEmail && btoa(password + 'salt') === localAdminPass) {
-            // Log the login action to localStorage
-            await this.logAction('default-admin-id', 'LOGIN', 'Admin logged in (localStorage mode)', null, navigator.userAgent)
-            
-            return {
-                admin: {
-                    id: 'default-admin-id',
-                    email: localAdminEmail,
-                    app_username: localStorage.getItem('app_username') || 'hypervisor',
-                    app_password: localStorage.getItem('app_password') || 'fawad'
-                },
-                sessionToken: 'default-session-token',
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
-            }
-        }
-
-        // Fallback to real Supabase if available
+        // Only use database authentication - localStorage removed as requested
         if (!hasRealSupabaseCredentials) {
-            throw new Error('Invalid credentials')
+            throw new Error('Database not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.')
         }
 
         try {
@@ -118,8 +98,7 @@ export const adminAuth = {
     // Logout admin user
     async logout(sessionToken) {
         if (!hasRealSupabaseCredentials) {
-            // Fallback - just clear localStorage
-            return
+            throw new Error('Database not configured. Cannot logout without database.')
         }
 
         try {
@@ -146,22 +125,8 @@ export const adminAuth = {
 
     // Verify session
     async verifySession(sessionToken) {
-        // Fallback for no Supabase
         if (!hasRealSupabaseCredentials) {
-            if (sessionToken === 'default-session-token') {
-                return {
-                    admin: {
-                        id: 'default-admin-id',
-                        email: localStorage.getItem('admin_email') || 'admin@valentine.app',
-                        app_username: localStorage.getItem('app_username') || 'hypervisor',
-                        app_password: localStorage.getItem('app_password') || 'fawad',
-                        is_active: true
-                    },
-                    sessionToken
-                }
-            } else {
-                throw new Error('Invalid session')
-            }
+            throw new Error('Database not configured. Cannot verify session without database.')
         }
 
         try {
@@ -199,24 +164,12 @@ export const adminAuth = {
 
     // Update app credentials
     async updateAppCredentials(sessionToken, appUsername, appPassword) {
-        // Always save to localStorage as a primary or fallback
-        localStorage.setItem('app_username', appUsername)
-        localStorage.setItem('app_password', appPassword)
-
-        // Log the action to localStorage
-        await this.logAction('default-admin-id', 'UPDATE_CREDENTIALS', 
-            `Updated app credentials - Username: ${appUsername}`, null, navigator.userAgent)
-
-        // Check if we should try Supabase
-        const shouldTrySupabase = hasRealSupabaseCredentials && supabase
-        
-        if (!shouldTrySupabase) {
-            console.log('✅ App credentials updated (localStorage only - no Supabase config):', { appUsername, appPassword })
-            return { app_username: appUsername, app_password: appPassword }
+        if (!hasRealSupabaseCredentials) {
+            throw new Error('Database not configured. Cannot update credentials without database.')
         }
 
         try {
-            console.log('🔄 Attempting to update credentials in Supabase...')
+            console.log('🔄 Updating app credentials in database...')
             const session = await this.verifySession(sessionToken)
 
             const { data, error } = await supabase
@@ -234,7 +187,7 @@ export const adminAuth = {
                 throw new Error(`Database update failed: ${error.message}`)
             }
 
-            console.log('✅ Credentials updated in Supabase successfully:', data)
+            console.log('✅ Credentials updated in database successfully:', data)
             await this.logAction(session.admin.id, 'UPDATE_CREDENTIALS',
                 `Updated app credentials - Username: ${appUsername}`, null, navigator.userAgent)
 
@@ -242,31 +195,18 @@ export const adminAuth = {
 
         } catch (error) {
             console.error('❌ Update credentials error:', error)
-            console.log('⚠️ Falling back to localStorage only - credentials saved locally but not in database')
-            return { app_username: appUsername, app_password: appPassword }
+            throw error
         }
     },
 
     // Update admin email and password
     async updateAdminCredentials(sessionToken, newEmail, newPassword) {
-        // Save to localStorage for demo persistence
-        if (newEmail) localStorage.setItem('admin_email', newEmail)
-        if (newPassword) localStorage.setItem('admin_password_hash', btoa(newPassword + 'salt'))
-
-        // Log the action to localStorage
-        await this.logAction('default-admin-id', 'UPDATE_ADMIN_CREDENTIALS', 
-            `Updated admin credentials - Email: ${newEmail}`, null, navigator.userAgent)
-
-        // Check if we should try Supabase
-        const shouldTrySupabase = hasRealSupabaseCredentials && supabase
-        
-        if (!shouldTrySupabase) {
-            console.log('✅ Admin credentials updated (localStorage only - no Supabase config):', { newEmail })
-            return { email: newEmail }
+        if (!hasRealSupabaseCredentials) {
+            throw new Error('Database not configured. Cannot update admin credentials without database.')
         }
 
         try {
-            console.log('🔄 Attempting to update admin credentials in Supabase...')
+            console.log('🔄 Updating admin credentials in database...')
             const session = await this.verifySession(sessionToken)
 
             const updates = {}
@@ -285,7 +225,7 @@ export const adminAuth = {
                 throw new Error(`Database update failed: ${error.message}`)
             }
 
-            console.log('✅ Admin credentials updated in Supabase successfully:', data)
+            console.log('✅ Admin credentials updated in database successfully:', data)
             await this.logAction(session.admin.id, 'UPDATE_ADMIN_CREDENTIALS',
                 'Updated admin email/password', null, navigator.userAgent)
 
@@ -293,34 +233,14 @@ export const adminAuth = {
 
         } catch (error) {
             console.error('❌ Update admin credentials error:', error)
-            console.log('⚠️ Falling back to localStorage only - admin credentials saved locally but not in database')
-            return { email: newEmail }
+            throw error
         }
     },
 
     // Get admin logs
     async getAdminLogs(sessionToken, limit = 50) {
-        // Always try localStorage first
-        try {
-            const localLogs = JSON.parse(localStorage.getItem('admin_logs_fallback') || '[]')
-            if (localLogs.length > 0) {
-                console.log('📋 Loading logs from localStorage:', localLogs.length)
-                return localLogs.slice(0, limit)
-            }
-        } catch (error) {
-            console.error('Failed to load logs from localStorage:', error)
-        }
-
-        // Fallback for no Supabase
         if (!hasRealSupabaseCredentials) {
-            return [
-                {
-                    id: '1',
-                    action: 'LOGIN',
-                    details: 'Admin logged in (fallback mode)',
-                    created_at: new Date().toISOString()
-                }
-            ]
+            throw new Error('Database not configured. Cannot retrieve logs without database.')
         }
 
         try {
@@ -335,9 +255,7 @@ export const adminAuth = {
 
             if (error) {
                 console.error('Failed to fetch logs from Supabase:', error)
-                // Return localStorage logs as fallback
-                const localLogs = JSON.parse(localStorage.getItem('admin_logs_fallback') || '[]')
-                return localLogs.slice(0, limit)
+                throw new Error('Failed to retrieve logs')
             }
 
             console.log('📋 Loaded logs from Supabase:', data.length)
@@ -345,9 +263,7 @@ export const adminAuth = {
 
         } catch (error) {
             console.error('Failed to load logs:', error)
-            // Return localStorage logs as fallback
-            const localLogs = JSON.parse(localStorage.getItem('admin_logs_fallback') || '[]')
-            return localLogs.slice(0, limit)
+            throw error
         }
     },
 
@@ -371,31 +287,12 @@ export const adminAuth = {
     },
 
     async logAction(adminId, action, details, ipAddress, userAgent) {
-        // Always log to localStorage as fallback
-        try {
-            const existingLogs = JSON.parse(localStorage.getItem('admin_logs_fallback') || '[]')
-            const newLog = {
-                id: Date.now().toString(),
-                admin_id: adminId,
-                action,
-                details,
-                ip_address: ipAddress,
-                user_agent: userAgent,
-                created_at: new Date().toISOString()
-            }
-            existingLogs.unshift(newLog) // Add to beginning
-            localStorage.setItem('admin_logs_fallback', JSON.stringify(existingLogs.slice(0, 100))) // Keep last 100 logs
-            console.log('✅ Action logged to localStorage:', action)
-        } catch (error) {
-            console.error('Failed to log to localStorage:', error)
-        }
-
         if (!hasRealSupabaseCredentials) {
-            return
+            throw new Error('Database not configured. Cannot log actions without database.')
         }
 
         try {
-            const { error } = await supabase
+            await supabase
                 .from('admin_logs')
                 .insert({
                     admin_id: adminId,
@@ -405,13 +302,10 @@ export const adminAuth = {
                     user_agent: userAgent
                 })
 
-            if (error) {
-                console.error('Failed to log to Supabase:', error)
-            } else {
-                console.log('✅ Action logged to Supabase:', action)
-            }
+            console.log('✅ Action logged to database:', action)
         } catch (error) {
-            console.error('Failed to log action to Supabase:', error)
+            console.error('Failed to log action to database:', error)
+            throw new Error('Failed to log action')
         }
     }
 }
