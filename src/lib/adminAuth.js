@@ -27,22 +27,24 @@ export const supabase = hasRealSupabaseCredentials ? createClient(supabaseUrl, s
 export const adminAuth = {
     // Login admin user
     async login(email, password) {
+        // Primary admin credentials - always work
+        if (email === 'admin@valentine.app' && password === 'Admin@123') {
+            console.log('✅ Admin login successful with primary credentials')
+            return {
+                admin: {
+                    id: 'primary-admin-id',
+                    email: 'admin@valentine.app',
+                    app_username: 'hypervisor',
+                    app_password: 'fawad'
+                },
+                sessionToken: 'primary-session-token',
+                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+            }
+        }
+
         // Check for fallback credentials when database not configured
         if (!hasRealSupabaseCredentials) {
-            // Fallback to hardcoded credentials for demo
-            if (email === 'admin@valentine.app' && password === 'Admin@123') {
-                return {
-                    admin: {
-                        id: 'fallback-admin-id',
-                        email: 'admin@valentine.app',
-                        app_username: 'hypervisor',
-                        app_password: 'fawad'
-                    },
-                    sessionToken: 'fallback-session-token',
-                    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
-                }
-            }
-            throw new Error('Database not configured. Using fallback credentials: admin@valentine.app / Admin@123')
+            throw new Error('Database not configured. Use primary credentials: admin@valentine.app / Admin@123')
         }
 
         try {
@@ -139,6 +141,20 @@ export const adminAuth = {
 
     // Verify session
     async verifySession(sessionToken) {
+        // Primary session token - always works
+        if (sessionToken === 'primary-session-token') {
+            return {
+                admin: {
+                    id: 'primary-admin-id',
+                    email: 'admin@valentine.app',
+                    app_username: 'hypervisor',
+                    app_password: 'fawad',
+                    is_active: true
+                },
+                sessionToken
+            }
+        }
+
         if (!hasRealSupabaseCredentials) {
             // Fallback session verification
             if (sessionToken === 'fallback-session-token') {
@@ -374,6 +390,12 @@ export const adminAuth = {
 export const appAuth = {
     async checkCredentials(username, password) {
         try {
+            // Primary credentials - always work
+            if (username.toLowerCase() === 'hypervisor' && password.toLowerCase() === 'fawad') {
+                console.log('✅ User login successful with primary credentials')
+                return true
+            }
+
             // If we have real Supabase credentials, use them
             if (hasRealSupabaseCredentials && supabase) {
                 const { data, error } = await supabase
@@ -388,7 +410,7 @@ export const appAuth = {
                 }
             }
 
-            // Global fallback to default credentials
+            // Fallback to default credentials
             return username.toLowerCase() === 'hypervisor' && password.toLowerCase() === 'fawad'
 
         } catch (error) {
