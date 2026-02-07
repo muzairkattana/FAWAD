@@ -159,7 +159,7 @@ $$ LANGUAGE plpgsql;
 INSERT INTO chat_members (name, is_online, avatar_url, status) 
 VALUES 
     ('Ayesha', true, 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ayesha', 'active'),
-    ('Fawad', true, 'https://api.dicebear.com/7.x/avataaars/svg?seed=Fawad', 'active'),
+    ('Uzair', true, 'https://api.dicebear.com/7.x/avataaars/svg?seed=Uzair', 'active'),
     ('Guest', false, 'https://api.dicebear.com/7.x/avataaars/svg?seed=Guest', 'away')
 ON CONFLICT (name) DO NOTHING;
 

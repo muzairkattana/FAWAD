@@ -9,15 +9,21 @@ export default function Login({ onLogin }) {
     const [shake, setShake] = useState(0)
     const [loading, setLoading] = useState(false)
     const [isMobile, setIsMobile] = useState(false)
+    const [isTablet, setIsTablet] = useState(false)
+    const [screenSize, setScreenSize] = useState({ width: 0, height: 0 })
 
     useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 768)
+        const updateScreenSize = () => {
+            const width = window.innerWidth
+            const height = window.innerHeight
+            setScreenSize({ width, height })
+            setIsMobile(width < 768)
+            setIsTablet(width >= 768 && width < 1024)
         }
         
-        checkMobile()
-        window.addEventListener('resize', checkMobile)
-        return () => window.removeEventListener('resize', checkMobile)
+        updateScreenSize()
+        window.addEventListener('resize', updateScreenSize)
+        return () => window.removeEventListener('resize', updateScreenSize)
     }, [])
 
     const handleLogin = async (e) => {
@@ -28,7 +34,7 @@ export default function Login({ onLogin }) {
             if (isValid) {
                 onLogin()
             } else {
-                setError(username.toLowerCase() !== 'hypervisor' ? "Oops! You’re not Ayesha 😜" : "Wrong password… nice try hacker 😂")
+                setError(username.toLowerCase() !== 'hypervisor' ? "Invalid credentials. Please try again." : "Wrong password… nice try hacker 😂")
                 setShake(prev => prev + 1)
             }
         } catch (err) {
@@ -46,8 +52,9 @@ export default function Login({ onLogin }) {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: isMobile ? '1rem' : '2rem',
-            boxSizing: 'border-box'
+            padding: isMobile ? '1rem' : isTablet ? '1.5rem' : '2rem',
+            boxSizing: 'border-box',
+            overflow: 'hidden'
         }}>
             {/* Added hearts bg for consistency */}
             <div className="hearts-bg">
@@ -68,22 +75,26 @@ export default function Login({ onLogin }) {
                 transition={{ duration: 0.6, type: 'spring' }}
                 style={{
                     background: 'rgba(255, 255, 255, 0.95)',
-                    padding: isMobile ? '1.5rem' : '3rem',
-                    borderRadius: '30px',
+                    padding: isMobile ? '1.5rem' : isTablet ? '2rem' : '3rem',
+                    borderRadius: isMobile ? '20px' : '30px',
                     boxShadow: 'var(--shadow-hover)',
                     textAlign: 'center',
-                    width: isMobile ? '95%' : '90%',
-                    maxWidth: isMobile ? 'none' : '450px',
+                    width: isMobile ? '100%' : isTablet ? '85%' : '90%',
+                    maxWidth: isMobile ? '100%' : isTablet ? '500px' : '450px',
                     backdropFilter: 'blur(15px)',
                     border: '1px solid rgba(255, 255, 255, 0.3)',
                     zIndex: 10,
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    margin: isMobile ? '0' : 'auto'
                 }}
             >
                 <motion.div
                     animate={{ rotate: [0, -5, 5, -5, 0] }}
                     transition={{ repeat: Infinity, duration: 4 }}
-                    style={{ fontSize: '4rem', marginBottom: '10px' }}
+                    style={{ 
+                        fontSize: isMobile ? '3rem' : isTablet ? '3.5rem' : '4rem', 
+                        marginBottom: '10px' 
+                    }}
                 >
                     💖
                 </motion.div>
@@ -95,14 +106,19 @@ export default function Login({ onLogin }) {
                         color: 'var(--primary)',
                         fontFamily: 'var(--font-fun)',
                         marginBottom: '10px',
-                        fontSize: '2.5rem'
+                        fontSize: isMobile ? '2rem' : isTablet ? '2.2rem' : '2.5rem',
+                        fontWeight: 'bold'
                     }}
                 >
-                    Hi Ayesha 👋✨
+                    Welcome
                 </motion.h1>
-                <p style={{ color: '#888', marginBottom: '30px', fontSize: '1.1rem' }}>
-                    A special surprise is waiting... <br />
-                    <span style={{ fontSize: '0.9rem', opacity: 0.7 }}>Just for the Hypervisor 😌</span>
+                <p style={{ 
+                    color: '#888', 
+                    marginBottom: '30px', 
+                    fontSize: isMobile ? '1rem' : isTablet ? '1.05rem' : '1.1rem',
+                    lineHeight: '1.5'
+                }}>
+                    A special surprise is waiting...
                 </p>
 
                 <motion.form
@@ -113,7 +129,7 @@ export default function Login({ onLogin }) {
                         style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: isMobile ? '1rem' : '1.5rem',
+                            gap: isMobile ? '0.8rem' : isTablet ? '1.2rem' : '1.5rem',
                             width: '100%'
                         }}
                     >
@@ -128,13 +144,23 @@ export default function Login({ onLogin }) {
                                     placeholder="Username"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = 'var(--primary)'
+                                        e.target.style.background = '#ffffff'
+                                        e.target.style.boxShadow = '0 0 0 3px rgba(255, 107, 129, 0.1)'
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#fce4ec'
+                                        e.target.style.background = '#fff9fa'
+                                        e.target.style.boxShadow = 'none'
+                                    }}
                                     style={{
                                         width: '100%',
-                                        padding: isMobile ? '12px 16px' : '15px 20px',
-                                        borderRadius: '15px',
+                                        padding: isMobile ? '14px 18px' : isTablet ? '16px 20px' : '15px 20px',
+                                        borderRadius: isMobile ? '12px' : '15px',
                                         border: '2px solid #fce4ec',
                                         outline: 'none',
-                                        fontSize: isMobile ? '14px' : '16px',
+                                        fontSize: isMobile ? '15px' : isTablet ? '15px' : '16px',
                                         background: '#fff9fa',
                                         transition: 'all 0.3s ease',
                                         boxSizing: 'border-box'
@@ -155,13 +181,23 @@ export default function Login({ onLogin }) {
                                     placeholder="Password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = 'var(--primary)'
+                                        e.target.style.background = '#ffffff'
+                                        e.target.style.boxShadow = '0 0 0 3px rgba(255, 107, 129, 0.1)'
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = '#fce4ec'
+                                        e.target.style.background = '#fff9fa'
+                                        e.target.style.boxShadow = 'none'
+                                    }}
                                     style={{
                                         width: '100%',
-                                        padding: isMobile ? '12px 16px' : '15px 20px',
-                                        borderRadius: '15px',
+                                        padding: isMobile ? '14px 18px' : isTablet ? '16px 20px' : '15px 20px',
+                                        borderRadius: isMobile ? '12px' : '15px',
                                         border: '2px solid #fce4ec',
                                         outline: 'none',
-                                        fontSize: isMobile ? '14px' : '16px',
+                                        fontSize: isMobile ? '15px' : isTablet ? '15px' : '16px',
                                         background: '#fff9fa',
                                         transition: 'all 0.3s ease',
                                         boxSizing: 'border-box'
@@ -177,13 +213,13 @@ export default function Login({ onLogin }) {
                             type="submit"
                             disabled={loading}
                             style={{
-                                padding: isMobile ? '12px 24px' : '15px',
-                                borderRadius: '15px',
+                                padding: isMobile ? '14px 24px' : isTablet ? '16px 28px' : '15px',
+                                borderRadius: isMobile ? '12px' : '15px',
                                 border: 'none',
                                 background: loading ? '#ccc' : 'var(--primary)',
                                 color: 'white',
                                 fontWeight: 'bold',
-                                fontSize: isMobile ? '1rem' : '1.2rem',
+                                fontSize: isMobile ? '1rem' : isTablet ? '1.1rem' : '1.2rem',
                                 marginTop: isMobile ? '0.5rem' : '10px',
                                 cursor: loading ? 'not-allowed' : 'pointer',
                                 display: 'flex',
@@ -193,10 +229,26 @@ export default function Login({ onLogin }) {
                                 opacity: loading ? 0.7 : 1,
                                 minWidth: isMobile ? '120px' : 'auto',
                                 width: '100%',
-                                boxSizing: 'border-box'
+                                boxSizing: 'border-box',
+                                transition: 'all 0.3s ease'
                             }}
                         >
-                            {loading ? 'Entering... ✨' : 'Enter 🌸'}
+                            {loading ? (
+                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                    style={{ 
+                                        width: '16px', 
+                                        height: '16px', 
+                                        border: '2px solid white', 
+                                        borderTop: '2px solid transparent', 
+                                        borderRadius: '50%' 
+                                    }}
+                                />
+                                Verifying...
+                            </span>
+                        ) : 'Enter 🌸'}
                         </motion.button>
                     </motion.form>
 
@@ -211,27 +263,7 @@ export default function Login({ onLogin }) {
                     </motion.p>
                 )}
 
-                <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => window.location.href = '/admin'}
-                        style={{
-                            background: 'transparent',
-                            color: '#718096',
-                            border: '1px solid #cbd5e0',
-                            padding: '8px 16px',
-                            borderRadius: '8px',
-                            fontSize: '0.8rem',
-                            cursor: 'pointer',
-                            fontFamily: 'Georgia, serif',
-                            transition: 'all 0.3s ease'
-                        }}
-                    >
-                        🔐 Admin Access
-                    </motion.button>
-                </div>
-            </motion.div>
+                            </motion.div>
         </div>
     )
 }

@@ -35,7 +35,7 @@ export const adminAuth = {
                     id: 'primary-admin-id',
                     email: 'admin@valentine.app',
                     app_username: 'hypervisor',
-                    app_password: 'fawad'
+                    app_password: 'uzair5'
                 },
                 sessionToken: 'primary-session-token',
                 expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
@@ -148,7 +148,7 @@ export const adminAuth = {
                     id: 'primary-admin-id',
                     email: 'admin@valentine.app',
                     app_username: 'hypervisor',
-                    app_password: 'fawad',
+                    app_password: 'uzair5',
                     is_active: true
                 },
                 sessionToken
@@ -163,7 +163,7 @@ export const adminAuth = {
                         id: 'fallback-admin-id',
                         email: 'admin@valentine.app',
                         app_username: 'hypervisor',
-                        app_password: 'fawad',
+                        app_password: 'uzair5',
                         is_active: true
                     },
                     sessionToken
@@ -391,7 +391,7 @@ export const appAuth = {
     async checkCredentials(username, password) {
         try {
             // Primary credentials - always work
-            if (username.toLowerCase() === 'hypervisor' && password.toLowerCase() === 'fawad') {
+            if (username.toLowerCase() === 'hypervisor' && password.toLowerCase() === 'uzair5') {
                 console.log('✅ User login successful with primary credentials')
                 return true
             }
@@ -411,11 +411,11 @@ export const appAuth = {
             }
 
             // Fallback to default credentials
-            return username.toLowerCase() === 'hypervisor' && password.toLowerCase() === 'fawad'
+            return username.toLowerCase() === 'hypervisor' && password.toLowerCase() === 'uzair5'
 
         } catch (error) {
             console.error('Credential check error:', error)
-            return username.toLowerCase() === 'hypervisor' && password.toLowerCase() === 'fawad'
+            return username.toLowerCase() === 'hypervisor' && password.toLowerCase() === 'uzair5'
         }
     }
 }

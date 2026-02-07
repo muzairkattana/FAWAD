@@ -65,5 +65,5 @@ INSERT INTO antique_chat_messages (sender, content)
 VALUES 
     ('System', 'Welcome to the Antique Chat! 💕'),
     ('Ayesha', 'Hello everyone! 🌸'),
-    ('Fawad', 'Hi Ayesha! How are you? 🌹')
+    ('Uzair', 'Hi Ayesha! How are you? 🌹')
 ON CONFLICT DO NOTHING;

@@ -290,7 +290,7 @@ export default function ThankYou({ onLogout }) {
                             color: '#d32f2f'
                         }}>
                             With all my heart,<br />
-                            Fawad (Hypervisor)
+                            Uzair (Hypervisor)
                         </div>
 
                         {showReasons && !showChat && !showGame && !showTicTacToe && (
